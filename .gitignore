@@ -41,3 +41,9 @@ app-example
 # generated native folders
 /ios
 /android
+
+# generated builds
+build-*
+
+# sample files
+assets/sample_*
