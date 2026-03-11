@@ -45,12 +45,12 @@ interface GateState {
   completeMovement: (guestId: string) => Promise<void>;
   logVehicleIn: (input: {
     plateNumber: string;
-    description: string;
+    name: string;
     reason: string;
   }) => Promise<void>;
   logVehicleOut: (input: {
     plateNumber: string;
-    description: string;
+    name: string;
     reason: string;
   }) => Promise<void>;
   setSearchQuery: (query: string) => void;
@@ -276,7 +276,7 @@ export const useGateStore = create<GateState>()(
               remoteVehicles.push({
                 id: m.app_log_id,
                 plateNumber: m.plate_number || "",
-                description: m.guest_name || "",
+                name: m.name || "",
                 reason: m.reason || "",
                 timeIn: m.timeIn
                   ? new Date(m.timeIn).toISOString()
@@ -360,7 +360,7 @@ export const useGateStore = create<GateState>()(
               try {
                 await syncMovementToApi({
                   type: "VEHICULAR",
-                  guest_name: v.description,
+                  name: v.name,
                   plate_number: v.plateNumber,
                   reason: v.reason,
                   app_log_id: v.id,

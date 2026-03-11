@@ -42,7 +42,7 @@ export default function VehiclesFeed() {
       const query = searchQuery.toLowerCase();
       return (
         v.plateNumber.toLowerCase().includes(query) ||
-        v.description.toLowerCase().includes(query)
+        v.name.toLowerCase().includes(query)
       );
     })
     .sort((a, b) => {
@@ -53,7 +53,7 @@ export default function VehiclesFeed() {
   const handleLogOut = (item: VehicularMovement) => {
     logVehicleOut({
       plateNumber: item.plateNumber,
-      description: item.description,
+      name: item.name,
       reason: item.reason,
     });
   };
@@ -65,7 +65,7 @@ export default function VehiclesFeed() {
           <View style={styles.logHeader}>
             <Text variant="titleMedium">{item.plateNumber}</Text>
             <Text variant="labelSmall" style={{ color: "gray" }}>
-              {item.description}
+              {item.name}
             </Text>
           </View>
 

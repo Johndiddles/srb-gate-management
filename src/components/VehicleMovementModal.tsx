@@ -30,7 +30,6 @@ export default function VehicleMovementModal({ visible, onDismiss }: Props) {
     }
 
     logVehicleIn({
-      date: new Date().toISOString().split("T")[0], // Just the date part YYYY-MM-DD
       name,
       plateNumber,
       reason,

@@ -38,8 +38,8 @@ export interface DailySnapshot {
 export interface VehicularMovement {
   id: string;
   plateNumber: string;
-  description: string;
   reason: string;
+  name: string;
   timeIn: string; // The cycle starts when treating a vehicle entry
   timeOut?: string; // The cycle ends when they leave
   syncStatus: "pending" | "synced" | "failed";

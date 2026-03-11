@@ -1,8 +1,7 @@
 import { useGateStore } from "../store/useGateStore";
 import { Guest } from "../types";
 
-// export const API_BASE_URL = "http://localhost:3000/api";
-export const API_BASE_URL = "http://192.168.0.102:3000/api";
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
 const getHeaders = () => {
   const token = useGateStore.getState().deviceToken;
