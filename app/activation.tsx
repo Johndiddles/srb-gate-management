@@ -27,7 +27,12 @@ export default function ActivationScreen() {
       const data = await activateDevice(licenseKey, deviceName);
 
       // Store activation state
-      activateProvider(licenseKey, deviceName, data.permissions || []);
+      activateProvider(
+        licenseKey,
+        deviceName,
+        data.permissions || [],
+        data.token,
+      );
 
       // Navigate to main tabs
       router.replace("/(tabs)/" as any);

@@ -14,6 +14,7 @@ interface GateState {
   error: string | null;
   isActivated: boolean;
   deviceName: string | null;
+  deviceToken: string | null;
   licenseKey: string | null;
   permissions: string[];
   guests: Guest[];
@@ -26,6 +27,7 @@ interface GateState {
     licenseKey: string,
     deviceName: string,
     permissions: string[],
+    deviceToken: string,
   ) => void;
   deactivateProvider: () => void;
   setGuests: (guests: Guest[]) => void;
@@ -60,6 +62,7 @@ export const useGateStore = create<GateState>()(
     (set, get) => ({
       isActivated: false,
       deviceName: null,
+      deviceToken: null,
       licenseKey: null,
       permissions: [],
       guests: [],
@@ -69,14 +72,21 @@ export const useGateStore = create<GateState>()(
       isLoading: false,
       error: null,
 
-      activateProvider: (licenseKey, deviceName, permissions) =>
-        set({ isActivated: true, licenseKey, deviceName, permissions }),
+      activateProvider: (licenseKey, deviceName, permissions, deviceToken) =>
+        set({
+          isActivated: true,
+          licenseKey,
+          deviceName,
+          permissions,
+          deviceToken,
+        }),
 
       deactivateProvider: () =>
         set({
           isActivated: false,
           licenseKey: null,
           deviceName: null,
+          deviceToken: null,
           permissions: [],
         }),
 
@@ -135,9 +145,29 @@ export const useGateStore = create<GateState>()(
               : g,
           );
 
+          let updatedMovements = state.vehicularMovements;
+
+          if (logData.plateNumber) {
+            const vehicleIndex = state.vehicularMovements.findIndex(
+              (v) =>
+                v.plateNumber.toLowerCase() ===
+                  logData.plateNumber.toLowerCase() && !v.timeOut,
+            );
+
+            if (vehicleIndex !== -1) {
+              updatedMovements = [...state.vehicularMovements];
+              updatedMovements[vehicleIndex] = {
+                ...updatedMovements[vehicleIndex],
+                timeOut: timestamp,
+                syncStatus: "pending",
+              };
+            }
+          }
+
           return {
             logs: [newLog, ...state.logs],
             guests: updatedGuests,
+            vehicularMovements: updatedMovements,
           };
         });
         get().syncPendingLogs().catch(console.error);
@@ -246,6 +276,7 @@ export const useGateStore = create<GateState>()(
                   timeOut: log.timeOut,
                   timeIn: log.timeIn,
                   mode: log.mode,
+                  room_number: log.roomNumber,
                   plateNumber: log.plateNumber,
                 });
                 successfulGuestLogIds.push(log.id);
