@@ -41,10 +41,14 @@ export default function RootLayout() {
   return (
     <PaperProvider theme={paperTheme}>
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="guest" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
+          <Stack.Screen name="activation" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="guest" />
         </Stack>
         <StatusBar style="auto" />
       </ThemeProvider>

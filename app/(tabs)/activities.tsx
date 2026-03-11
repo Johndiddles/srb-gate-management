@@ -1,18 +1,35 @@
-import React, { useState } from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import React, { useState, useEffect } from "react";
+import { FlatList, StyleSheet, View, RefreshControl } from "react-native";
 import { Searchbar, Surface, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useGateStore } from "../../src/store/useGateStore";
 import { ActivityLog } from "../../src/types";
 
 export default function ActivityFeed() {
-  const { logs, guests } = useGateStore();
+  const { logs, guests, syncPendingLogs } = useGateStore();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const onRefresh = React.useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await syncPendingLogs();
+    } catch (error) {
+      console.error("Refresh failed", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [syncPendingLogs]);
+
+  useEffect(() => {
+    // Attempt background sync on mount
+    syncPendingLogs().catch(() => {});
+  }, [syncPendingLogs]);
 
   const filteredLogs = logs
     .filter((log) => {
       // Find guest to check status
-      const guest = guests.find((g) => g.id === log.guestId);
+      const guest = guests.find((g) => g._id === log.guestId);
       // Ensure we show logs for guests who are currently in-house or checked-out (as per request)
       // "all activities for all in-house/checked-in guests... throughout the guest's stay"
       if (!guest) return false;
@@ -24,10 +41,8 @@ export default function ActivityFeed() {
       return matchesSearch;
     })
     .sort((a, b) => {
-      // Sort by latest activity (timeIn or timeOut)
-      const timeA = a.timeIn || a.timeOut;
-      const timeB = b.timeIn || b.timeOut;
-      return new Date(timeB).getTime() - new Date(timeA).getTime();
+      // Sort by latest activity timestamp
+      return new Date(b.timeOut).getTime() - new Date(a.timeOut).getTime();
     });
 
   const renderItem = ({ item }: { item: ActivityLog }) => {
@@ -44,27 +59,21 @@ export default function ActivityFeed() {
           <View style={styles.logDetails}>
             <View style={styles.timeRow}>
               <Text variant="bodyMedium">
-                🔴 Out: {new Date(item.timeOut).toLocaleString()}
+                📤 Out: {new Date(item.timeOut).toLocaleString()}
               </Text>
-              <Text variant="bodySmall" style={{ color: "#666" }}>
-                To: {item.destination} ({item.mode})
+              {item.timeIn ? (
+                <Text variant="bodyMedium">
+                  📥 RETURNED: {new Date(item.timeIn).toLocaleString()}
+                </Text>
+              ) : (
+                <Text variant="bodyMedium" style={{ color: "orange" }}>
+                  Currently Out
+                </Text>
+              )}
+              <Text variant="bodySmall" style={{ color: "#666", marginTop: 4 }}>
+                To: {item.destination} {item.mode ? `(${item.mode})` : ""}
               </Text>
             </View>
-            {item.timeIn && (
-              <View style={[styles.timeRow, { marginTop: 4 }]}>
-                <Text variant="bodyMedium">
-                  🟢 In: {new Date(item.timeIn).toLocaleString()}
-                </Text>
-              </View>
-            )}
-            {!item.timeIn && (
-              <Text
-                variant="labelSmall"
-                style={{ color: "orange", marginTop: 4 }}
-              >
-                Currently Out
-              </Text>
-            )}
           </View>
         </View>
       </Surface>
@@ -90,6 +99,9 @@ export default function ActivityFeed() {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+        }
         ListEmptyComponent={
           <Text style={{ textAlign: "center", marginTop: 20, color: "gray" }}>
             No activities recorded.

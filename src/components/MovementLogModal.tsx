@@ -9,7 +9,7 @@ import {
   TextInput,
 } from "react-native-paper";
 import { useGateStore } from "../store/useGateStore";
-import { Guest } from "../types";
+import { Guest, TransportMode } from "../types";
 import AutocompleteInput from "./AutocompleteInput";
 
 interface Props {
@@ -25,17 +25,17 @@ export default function MovementLogModal({ visible, onDismiss, guest }: Props) {
   );
   const [destination, setDestination] = useState("");
   const [plateNumber, setPlateNumber] = useState("");
-  const [mode, setMode] = useState("personal"); // 'walk' | 'taxi' | 'personal' | 'shuttle'
+  const [mode, setMode] = useState<TransportMode>("personal");
 
   const handleSave = () => {
     if (!guest) return;
 
     logMovement({
-      guestId: guest.id,
+      guestId: guest._id,
       guestName: `${guest.lastName}, ${guest.firstName}`,
       roomNumber: guest.roomNumber,
       destination,
-      mode: mode as any,
+      mode,
       plateNumber,
     });
 
@@ -73,7 +73,7 @@ export default function MovementLogModal({ visible, onDismiss, guest }: Props) {
               { value: "personal", label: "Car" },
               { value: "taxi", label: "Taxi" },
               { value: "walk", label: "Walk" },
-              { value: "shuttle", label: "Bus" },
+              { value: "bus", label: "Bus" },
             ]}
             style={styles.segmentedButton}
           />

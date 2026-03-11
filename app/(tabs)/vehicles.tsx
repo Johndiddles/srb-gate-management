@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import React, { useState, useEffect } from "react";
+import { FlatList, StyleSheet, View, RefreshControl } from "react-native";
 import { Button, Searchbar, Surface, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import VehicleMovementModal from "../../src/components/VehicleMovementModal";
@@ -7,27 +7,46 @@ import { useGateStore } from "../../src/store/useGateStore";
 import { VehicularMovement } from "../../src/types";
 
 export default function VehiclesFeed() {
-  const { vehicularMovements, logVehicleOut } = useGateStore();
+  const { vehicularMovements, logVehicleOut, syncPendingLogs } = useGateStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const onRefresh = React.useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await syncPendingLogs();
+    } catch (error) {
+      console.error("Refresh failed", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [syncPendingLogs]);
+
+  useEffect(() => {
+    // Attempt background sync on mount
+    syncPendingLogs().catch(() => {});
+  }, [syncPendingLogs]);
 
   const filteredMovements = vehicularMovements
     .filter((v) => {
       const query = searchQuery.toLowerCase();
       return (
         v.plateNumber.toLowerCase().includes(query) ||
-        v.name.toLowerCase().includes(query)
+        v.description.toLowerCase().includes(query)
       );
     })
     .sort((a, b) => {
       // Sort by most recent activity
-      const timeA = a.timeOut || a.timeIn || a.date;
-      const timeB = b.timeOut || b.timeIn || b.date;
-      return new Date(timeB).getTime() - new Date(timeA).getTime();
+      return new Date(b.timeIn).getTime() - new Date(a.timeIn).getTime();
     });
 
-  const handleLogOut = (id: string) => {
-    logVehicleOut(id);
+  const handleLogOut = (item: VehicularMovement) => {
+    logVehicleOut({
+      plateNumber: item.plateNumber,
+      description: item.description,
+      reason: item.reason,
+    });
   };
 
   const renderItem = ({ item }: { item: VehicularMovement }) => {
@@ -37,7 +56,7 @@ export default function VehiclesFeed() {
           <View style={styles.logHeader}>
             <Text variant="titleMedium">{item.plateNumber}</Text>
             <Text variant="labelSmall" style={{ color: "gray" }}>
-              {item.name}
+              {item.description}
             </Text>
           </View>
 
@@ -46,21 +65,24 @@ export default function VehiclesFeed() {
               <Text variant="bodyMedium">Reason: {item.reason}</Text>
             </View>
 
-            {item.timeIn && (
-              <View style={[styles.timeRow, { marginTop: 4 }]}>
-                <Text variant="bodyMedium">
-                  🟢 In: {new Date(item.timeIn).toLocaleString()}
-                </Text>
-              </View>
-            )}
+            <View style={[styles.timeRow, { marginTop: 4 }]}>
+              <Text variant="bodyMedium">
+                {item.timeOut ? "⚫ OUT" : "🟢 Inside"}
+              </Text>
+            </View>
 
-            {item.timeOut ? (
-              <View style={[styles.timeRow, { marginTop: 4 }]}>
+            <View style={[styles.timeRow, { marginTop: 4 }]}>
+              <Text variant="bodyMedium">
+                In: {new Date(item.timeIn).toLocaleString()}
+              </Text>
+              {item.timeOut && (
                 <Text variant="bodyMedium">
-                  🔴 Out: {new Date(item.timeOut).toLocaleString()}
+                  Out: {new Date(item.timeOut).toLocaleString()}
                 </Text>
-              </View>
-            ) : (
+              )}
+            </View>
+
+            {!item.timeOut && (
               <View
                 style={[
                   styles.timeRow,
@@ -78,7 +100,7 @@ export default function VehiclesFeed() {
                 <Button
                   mode="outlined"
                   compact
-                  onPress={() => handleLogOut(item.id)}
+                  onPress={() => handleLogOut(item)}
                 >
                   Log Exit
                 </Button>
@@ -113,6 +135,9 @@ export default function VehiclesFeed() {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+        }
         ListEmptyComponent={
           <Text style={{ textAlign: "center", marginTop: 20, color: "gray" }}>
             No vehicles recorded.

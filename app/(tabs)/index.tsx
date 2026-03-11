@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import React, { useState, useEffect } from "react";
+import { FlatList, StyleSheet, View, RefreshControl } from "react-native";
 import {
   Button,
   Searchbar,
@@ -15,23 +15,52 @@ import { pickAndParseFile } from "../../src/services/FileImporter";
 import { useGateStore } from "../../src/store/useGateStore";
 import { Guest } from "../../src/types";
 
-export default function Dashboard() {
+export default function IndexPage() {
   const {
     guests,
     logs,
-    searchQuery,
-    setSearchQuery,
     importGuests,
     fetchGuests,
     updateGuestStatus,
     completeMovement,
+    isActivated,
+    // resetDailyLogs,
+    syncPendingLogs,
   } = useGateStore();
   const router = useRouter();
+
   const [activeTab, setActiveTab] = useState("all"); // 'all' | 'arrival' | 'in-house'
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
+  const onRefresh = React.useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([fetchGuests(), syncPendingLogs()]);
+    } catch (error) {
+      console.error("Refresh failed", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [fetchGuests, syncPendingLogs]);
+
+  useEffect(() => {
+    if (!isActivated) {
+      router.replace("/activation" as any);
+      return;
+    }
+
+    // Attempt to auto-sync guests from Server in background so local device gets fresh copy
+    fetchGuests().catch(() => {});
+    syncPendingLogs().catch(() => {}); // Push any locally queued offline movements
+  }, [isActivated, router, fetchGuests, syncPendingLogs]);
+
+  if (!isActivated) {
+    return null; // Avoid rendering flash before layout trap catches
+  }
   const filteredGuests = guests.filter((g) => {
     let matchesTab = true;
     if (activeTab === "arrival") matchesTab = g.status === "arrival";
@@ -86,18 +115,21 @@ export default function Dashboard() {
   const handleReturn = (guestId: string) => {
     const activeLog = logs.find((l) => l.guestId === guestId && !l.timeIn);
     if (activeLog) {
-      completeMovement(activeLog.id);
+      // console.log({ activeLog });
+      completeMovement(guestId);
     }
   };
 
   const renderItem = ({ item }: { item: Guest }) => {
-    const activeLog = logs.find((l) => l.guestId === item.id && !l.timeIn);
-    const isOut = !!activeLog;
+    const activeLog = logs.find((l) => l.guestId === item._id && !l.timeIn);
+    const isOut = item.isOut || !!activeLog;
+
+    // console.log({ activeLog, isOut: item.isOut });
 
     return (
       <Surface style={styles.card} elevation={1}>
         <TouchableRipple
-          onPress={() => router.push(`/guest/${item.id}`)}
+          onPress={() => router.push(`/guest/${item._id}`)}
           style={{ flex: 1 }}
         >
           <View style={styles.cardContent}>
@@ -117,7 +149,7 @@ export default function Dashboard() {
                   {item.status === "arrival"
                     ? "Arrival"
                     : isOut
-                      ? `🔴 OUT - ${activeLog?.destination} (${activeLog?.mode})`
+                      ? `🔴 OUT${activeLog ? ` - ${activeLog.destination} (${activeLog.mode})` : ""}`
                       : item.status === "checked-out"
                         ? "Checked Out"
                         : `🟢 In-House`}
@@ -130,7 +162,7 @@ export default function Dashboard() {
                   mode="contained"
                   onPress={(e) => {
                     e.stopPropagation();
-                    updateGuestStatus(item.id, "in-house");
+                    updateGuestStatus(item._id, "in-house");
                   }}
                   compact
                   style={{
@@ -149,7 +181,7 @@ export default function Dashboard() {
                       buttonColor="#4caf50"
                       onPress={(e) => {
                         e.stopPropagation();
-                        handleReturn(item.id);
+                        handleReturn(item._id);
                       }}
                       compact
                       style={{
@@ -180,7 +212,7 @@ export default function Dashboard() {
                     compact
                     onPress={(e) => {
                       e.stopPropagation();
-                      updateGuestStatus(item.id, "checked-out");
+                      updateGuestStatus(item._id, "checked-out");
                     }}
                     style={{
                       paddingHorizontal: 16,
@@ -237,23 +269,27 @@ export default function Dashboard() {
         />
       </View>
 
-      <SegmentedButtons
-        value={activeTab}
-        onValueChange={setActiveTab}
-        buttons={[
-          { value: "all", label: "All" },
-          { value: "arrival", label: "Arrivals" },
-          { value: "in-house", label: "In-House" },
-        ]}
-        style={styles.tabs}
-        density="small" // Better for mobile
-      />
+      <View style={styles.tabs}>
+        <SegmentedButtons
+          value={activeTab}
+          onValueChange={setActiveTab}
+          buttons={[
+            { value: "all", label: "All" },
+            { value: "arrival", label: "Arrivals" },
+            { value: "in-house", label: "In-House" },
+          ]}
+          density="small" // Better for mobile
+        />
+      </View>
 
       <FlatList
         data={filteredGuests}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id}
         contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+        }
       />
 
       <MovementLogModal

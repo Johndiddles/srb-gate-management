@@ -1,40 +1,62 @@
 import { Guest } from "../types";
 
-// Mock implementation since no real API endpoint is provided yet.
-// In a real app, this would use fetch/axios and environment variables.
+// export const API_BASE_URL = "http://localhost:3000/api";
+export const API_BASE_URL = "http://192.168.0.102:3000/api";
+
+export const activateDevice = async (
+  licenseKey: string,
+  deviceName: string,
+) => {
+  const res = await fetch(`${API_BASE_URL}/licenses/verify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      license_key: licenseKey,
+      device_name: deviceName,
+    }),
+  });
+
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error || "Activation failed");
+  }
+
+  return res.json(); // { message, permissions }
+};
 
 export const fetchGuestsFromApi = async (): Promise<Guest[]> => {
-  console.log("Fetching guests from API...");
+  const res = await fetch(`${API_BASE_URL}/guests`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch guest list");
+  }
 
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  // Return mock data that mirrors the structure we expect
-  return [
-    {
-      id: "101-John-Doe-2026-02-16",
-      firstName: "John",
-      lastName: "Doe",
-      roomNumber: "101",
-      status: "in-house",
-      arrivalDate: "2026-02-16",
-      notes: "Fetched from API",
-    },
-    {
-      id: "102-Jane-Smith-2026-02-17",
-      firstName: "Jane",
-      lastName: "Smith",
-      roomNumber: "102",
-      status: "arrival",
-      arrivalDate: "2026-02-17",
-    },
-    {
-      id: "103-Bob-Builder-2026-02-15",
-      firstName: "Bob",
-      lastName: "Builder",
-      roomNumber: "103",
-      status: "checked-out",
-      arrivalDate: "2026-02-15",
-    },
-  ];
+  const data = await res.json();
+  return data || [];
 };
+
+export const syncMovementToApi = async (body: any) => {
+  console.log("Syncing movement to API...", { body });
+  const res = await fetch(`${API_BASE_URL}/movements`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const data = await res.json();
+    console.log({ data });
+    throw new Error("Failed to sync movement to server");
+  } else {
+    const data = await res.json();
+    console.log("Movement synced successfully", { data });
+    return data;
+  }
+};
+
+const ApiService = {
+  activateDevice,
+  fetchGuestsFromApi,
+  syncMovementToApi,
+};
+
+export default ApiService;
