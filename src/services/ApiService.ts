@@ -13,7 +13,7 @@ const getHeaders = () => {
 };
 
 const handleResponse = async (res: Response) => {
-  if (res.status === 401 || res.status === 299) {
+  if (res.status === 299) {
     useGateStore.getState().deactivateProvider();
     throw new Error("License revoked or unauthorized. Deactivating device.");
   }
@@ -48,8 +48,14 @@ export const fetchGuestsFromApi = async (): Promise<Guest[]> => {
   return data || [];
 };
 
+const fetchDeviceMovements = async () => {
+  const res = await fetch(`${API_BASE_URL}/movements`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+};
+
 export const syncMovementToApi = async (body: any) => {
-  console.log("Syncing movement to API...", { body });
   const res = await fetch(`${API_BASE_URL}/movements`, {
     method: "POST",
     headers: getHeaders(),
@@ -57,7 +63,6 @@ export const syncMovementToApi = async (body: any) => {
   });
 
   const data = await handleResponse(res);
-  console.log("Movement synced successfully", { data });
   return data;
 };
 
@@ -65,6 +70,7 @@ const ApiService = {
   activateDevice,
   fetchGuestsFromApi,
   syncMovementToApi,
+  fetchDeviceMovements,
 };
 
 export default ApiService;

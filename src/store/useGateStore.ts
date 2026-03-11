@@ -55,6 +55,7 @@ interface GateState {
   }) => Promise<void>;
   setSearchQuery: (query: string) => void;
   syncPendingLogs: () => Promise<void>;
+  initialSyncMovements: () => Promise<void>;
 }
 
 export const useGateStore = create<GateState>()(
@@ -248,9 +249,69 @@ export const useGateStore = create<GateState>()(
 
       initialSyncMovements: async () => {
         try {
-          // Note: fetchGuestMovements / fetchVehicleMovements removed since data is pushed individually.
-          // Historical data sync can be implemented as individual REST api fetch when needed.
-          set((state) => ({}));
+          await get().syncPendingLogs();
+          const ApiService = (await import("../services/ApiService")).default;
+          const remoteMovements = await ApiService.fetchDeviceMovements();
+
+          const remoteLogs: ActivityLog[] = [];
+          const remoteVehicles: VehicularMovement[] = [];
+
+          for (const m of remoteMovements as any[]) {
+            if (m.type === "GUEST") {
+              remoteLogs.push({
+                id: m.app_log_id,
+                guestId: m.guest_id || "",
+                guestName: m.guest_name || "",
+                roomNumber: m.room_number || "",
+                destination: m.reason || "",
+                timeOut: m.timeOut
+                  ? new Date(m.timeOut).toISOString()
+                  : new Date(m.timestamp || Date.now()).toISOString(),
+                timeIn: m.timeIn ? new Date(m.timeIn).toISOString() : undefined,
+                mode: (m.mode as TransportMode) || "walk",
+                plateNumber: m.plate_number,
+                syncStatus: "synced",
+              });
+            } else if (m.type === "VEHICULAR") {
+              remoteVehicles.push({
+                id: m.app_log_id,
+                plateNumber: m.plate_number || "",
+                description: m.guest_name || "",
+                reason: m.reason || "",
+                timeIn: m.timeIn
+                  ? new Date(m.timeIn).toISOString()
+                  : new Date(m.timestamp || Date.now()).toISOString(),
+                timeOut: m.timeOut
+                  ? new Date(m.timeOut).toISOString()
+                  : undefined,
+                syncStatus: "synced",
+              });
+            }
+          }
+
+          set((state) => {
+            const pendingLogs = state.logs.filter(
+              (l) => l.syncStatus === "pending",
+            );
+            const pendingVehicles = state.vehicularMovements.filter(
+              (v) => v.syncStatus === "pending",
+            );
+
+            const pendingLogIds = new Set(pendingLogs.map((l) => l.id));
+            const pendingVehicleIds = new Set(pendingVehicles.map((v) => v.id));
+
+            const finalLogs = [
+              ...pendingLogs,
+              ...remoteLogs.filter((l) => !pendingLogIds.has(l.id)),
+            ];
+
+            const finalVehicles = [
+              ...pendingVehicles,
+              ...remoteVehicles.filter((v) => !pendingVehicleIds.has(v.id)),
+            ];
+
+            return { logs: finalLogs, vehicularMovements: finalVehicles };
+          });
         } catch (e) {
           console.error("Failed to load historical movements:", e);
         }
@@ -277,7 +338,7 @@ export const useGateStore = create<GateState>()(
                   timeIn: log.timeIn,
                   mode: log.mode,
                   room_number: log.roomNumber,
-                  plateNumber: log.plateNumber,
+                  plate_number: log.plateNumber,
                 });
                 successfulGuestLogIds.push(log.id);
 

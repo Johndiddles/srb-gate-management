@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { FlatList, StyleSheet, View, RefreshControl } from "react-native";
 import { Button, Searchbar, Surface, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -6,8 +6,15 @@ import VehicleMovementModal from "../../src/components/VehicleMovementModal";
 import { useGateStore } from "../../src/store/useGateStore";
 import { VehicularMovement } from "../../src/types";
 
+import { useFocusEffect } from "expo-router";
+
 export default function VehiclesFeed() {
-  const { vehicularMovements, logVehicleOut, syncPendingLogs } = useGateStore();
+  const {
+    vehicularMovements,
+    logVehicleOut,
+    syncPendingLogs,
+    initialSyncMovements,
+  } = useGateStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -23,10 +30,12 @@ export default function VehiclesFeed() {
     }
   }, [syncPendingLogs]);
 
-  useEffect(() => {
-    // Attempt background sync on mount
-    syncPendingLogs().catch(() => {});
-  }, [syncPendingLogs]);
+  useFocusEffect(
+    React.useCallback(() => {
+      // Attempt background sync on focus
+      initialSyncMovements().catch(() => {});
+    }, [initialSyncMovements]),
+  );
 
   const filteredMovements = vehicularMovements
     .filter((v) => {

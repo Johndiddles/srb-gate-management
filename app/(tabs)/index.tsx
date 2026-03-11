@@ -124,8 +124,6 @@ export default function IndexPage() {
     const activeLog = logs.find((l) => l.guestId === item._id && !l.timeIn);
     const isOut = item.isOut || !!activeLog;
 
-    // console.log({ activeLog, isOut: item.isOut });
-
     return (
       <Surface style={styles.card} elevation={1}>
         <TouchableRipple

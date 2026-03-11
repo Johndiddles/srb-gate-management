@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { FlatList, StyleSheet, View, RefreshControl } from "react-native";
 import { Searchbar, Surface, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useGateStore } from "../../src/store/useGateStore";
 import { ActivityLog } from "../../src/types";
 
+import { useFocusEffect } from "expo-router";
+
 export default function ActivityFeed() {
-  const { logs, guests, syncPendingLogs } = useGateStore();
+  const { logs, guests, syncPendingLogs, initialSyncMovements } =
+    useGateStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -21,10 +24,14 @@ export default function ActivityFeed() {
     }
   }, [syncPendingLogs]);
 
-  useEffect(() => {
-    // Attempt background sync on mount
-    syncPendingLogs().catch(() => {});
-  }, [syncPendingLogs]);
+  useFocusEffect(
+    React.useCallback(() => {
+      // Background sync on focus
+      initialSyncMovements().catch(() => {});
+    }, [initialSyncMovements]),
+  );
+
+  console.log({ logs });
 
   const filteredLogs = logs
     .filter((log) => {
@@ -41,7 +48,6 @@ export default function ActivityFeed() {
       return matchesSearch;
     })
     .sort((a, b) => {
-      // Sort by latest activity timestamp
       return new Date(b.timeOut).getTime() - new Date(a.timeOut).getTime();
     });
 
@@ -70,8 +76,14 @@ export default function ActivityFeed() {
                   Currently Out
                 </Text>
               )}
-              <Text variant="bodySmall" style={{ color: "#666", marginTop: 4 }}>
-                To: {item.destination} {item.mode ? `(${item.mode})` : ""}
+              <Text
+                variant="bodyMedium"
+                style={{ color: "#666", marginTop: 4 }}
+              >
+                To: {item.destination}{" "}
+                {item.mode
+                  ? `(${item.mode} ${item.plateNumber ? `- ${item.plateNumber}` : ""})`
+                  : ""}
               </Text>
             </View>
           </View>
