@@ -12,6 +12,8 @@ export default function TabLayout() {
 
   const canAccessGuests =
     permissions.includes("view_guest_list") || permissions.length === 0; // default visible if none specified maybe? Or strict. Let's say strict requires "GUEST".
+  const canAccessActivities =
+    permissions.includes("log_guest_movement") || permissions.length === 0;
   const canAccessVehicles =
     permissions.includes("log_vehicular_movement") || permissions.length === 0;
 
@@ -37,7 +39,7 @@ export default function TabLayout() {
         name="activities"
         options={{
           title: "Activity Log",
-          href: canAccessGuests || canAccessVehicles ? "/activities" : null,
+          href: canAccessActivities ? "/activities" : null,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="local-activity" color={color} />
           ),

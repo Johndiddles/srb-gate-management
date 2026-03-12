@@ -1,7 +1,8 @@
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { Button, Text, TextInput, Surface } from "react-native-paper";
+import { Button, Text, Surface } from "react-native-paper";
+import ThemedTextInput from "../src/components/ThemedTextInput";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { activateDevice } from "../src/services/ApiService";
 import { useGateStore } from "../src/store/useGateStore";
@@ -34,8 +35,24 @@ export default function ActivationScreen() {
         data.token,
       );
 
+      const perms = data.permissions || [];
+      const canAccessGuests =
+        perms.includes("view_guest_list") || perms.length === 0;
+      const canAccessActivities =
+        perms.includes("log_guest_movement") || perms.length === 0;
+      const canAccessVehicles =
+        perms.includes("log_vehicular_movement") || perms.length === 0;
+
+      const initialRoute = canAccessGuests
+        ? "/(tabs)/"
+        : canAccessActivities
+          ? "/(tabs)/activities"
+          : canAccessVehicles
+            ? "/(tabs)/vehicles"
+            : "/(tabs)/";
+
       // Navigate to main tabs
-      router.replace("/(tabs)/" as any);
+      router.replace(initialRoute as any);
     } catch (err: any) {
       setError(err.message || "Failed to verify license.");
     } finally {
@@ -62,25 +79,21 @@ export default function ActivationScreen() {
         )}
 
         <View style={styles.form}>
-          <TextInput
+          <ThemedTextInput
             label="Device Name"
             value={deviceName}
             onChangeText={setDeviceName}
-            mode="outlined"
             style={styles.input}
-            textColor="black"
             autoCapitalize="words"
           />
 
-          <TextInput
+          <ThemedTextInput
             label="License Key"
             value={licenseKey}
             onChangeText={setLicenseKey}
-            mode="outlined"
             style={styles.input}
-            textColor="black"
             autoCapitalize="none"
-            secureTextEntry
+            // secureTextEntry
           />
 
           <Button
@@ -90,6 +103,11 @@ export default function ActivationScreen() {
             disabled={loading}
             style={styles.button}
             contentStyle={{ paddingVertical: 8 }}
+            labelStyle={{
+              color: "white",
+              fontSize: 18,
+              fontWeight: "semibold",
+            }}
           >
             Verify & Activate
           </Button>

@@ -7,6 +7,9 @@ import { useGateStore } from "../../src/store/useGateStore";
 import { VehicularMovement } from "../../src/types";
 
 import { useFocusEffect } from "expo-router";
+import { isTabletByDimensions } from "@/src/utils/dimensions";
+
+const isTablet = isTabletByDimensions();
 
 export default function VehiclesFeed() {
   const {
@@ -63,58 +66,63 @@ export default function VehiclesFeed() {
       <Surface style={styles.card} elevation={1}>
         <View style={styles.cardContent}>
           <View style={styles.logHeader}>
-            <Text variant="titleMedium">{item.plateNumber}</Text>
-            <Text variant="labelSmall" style={{ color: "gray" }}>
+            <Text
+              variant={isTablet ? "titleLarge" : "titleMedium"}
+              style={{ fontWeight: "bold" }}
+            >
+              {item.plateNumber}
+            </Text>
+            <Text
+              variant={isTablet ? "bodyLarge" : "bodyMedium"}
+              style={{ color: "black" }}
+            >
               {item.name}
             </Text>
           </View>
 
           <View style={styles.logDetails}>
-            <View style={styles.timeRow}>
-              <Text variant="bodyMedium">Reason: {item.reason}</Text>
+            <View>
+              <View style={styles.timeRow}>
+                <Text variant={isTablet ? "bodyLarge" : "bodyMedium"}>
+                  Reason: {item.reason}
+                </Text>
+              </View>
+
+              <View style={[styles.timeRow, { marginTop: 4 }]}>
+                <Text variant={isTablet ? "bodyLarge" : "bodyMedium"}>
+                  {item.timeOut ? "⚫ OUT" : "🟢 Inside"}
+                </Text>
+              </View>
             </View>
 
             <View style={[styles.timeRow, { marginTop: 4 }]}>
-              <Text variant="bodyMedium">
-                {item.timeOut ? "⚫ OUT" : "🟢 Inside"}
-              </Text>
-            </View>
-
-            <View style={[styles.timeRow, { marginTop: 4 }]}>
-              <Text variant="bodyMedium">
+              <Text variant={isTablet ? "bodyLarge" : "bodyMedium"}>
                 In: {new Date(item.timeIn).toLocaleString()}
               </Text>
               {item.timeOut && (
-                <Text variant="bodyMedium">
+                <Text variant={isTablet ? "bodyLarge" : "bodyMedium"}>
                   Out: {new Date(item.timeOut).toLocaleString()}
                 </Text>
               )}
-            </View>
 
-            {!item.timeOut && (
-              <View
-                style={[
-                  styles.timeRow,
-                  {
-                    marginTop: 12,
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  },
-                ]}
-              >
-                <Text variant="labelSmall" style={{ color: "orange" }}>
-                  Currently Inside
-                </Text>
-                <Button
-                  mode="outlined"
-                  compact
-                  onPress={() => handleLogOut(item)}
+              {!item.timeOut && (
+                <View
+                  style={[
+                    styles.timeRow,
+                    {
+                      marginTop: 12,
+                      flexDirection: "row",
+                      justifyContent: "flex-end",
+                      alignItems: "center",
+                    },
+                  ]}
                 >
-                  Log Exit
-                </Button>
-              </View>
-            )}
+                  <Button mode="outlined" onPress={() => handleLogOut(item)}>
+                    Log Exit
+                  </Button>
+                </View>
+              )}
+            </View>
           </View>
         </View>
       </Surface>
@@ -205,6 +213,9 @@ const styles = StyleSheet.create({
   },
   logDetails: {
     gap: 4,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   timeRow: {},
 });

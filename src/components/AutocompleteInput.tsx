@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Keyboard, StyleProp, View, ViewStyle } from "react-native";
-import { Menu, TextInput } from "react-native-paper";
+import { Menu } from "react-native-paper";
+import ThemedTextInput from "./ThemedTextInput";
 
-interface Props extends React.ComponentProps<typeof TextInput> {
+interface Props extends React.ComponentProps<typeof ThemedTextInput> {
   suggestions: string[];
   containerStyle?: StyleProp<ViewStyle>;
 }
@@ -42,7 +43,7 @@ export default function AutocompleteInput({
         visible={showMenu}
         onDismiss={() => setMenuVisible(false)}
         anchor={
-          <TextInput
+          <ThemedTextInput
             value={value}
             onChangeText={(text) => {
               onChangeText?.(text);

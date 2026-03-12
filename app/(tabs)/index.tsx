@@ -26,6 +26,7 @@ export default function IndexPage() {
     isActivated,
     // resetDailyLogs,
     syncPendingLogs,
+    permissions,
   } = useGateStore();
   const router = useRouter();
 
@@ -53,12 +54,33 @@ export default function IndexPage() {
       return;
     }
 
+    const canAccessGuests =
+      permissions.includes("view_guest_list") || permissions.length === 0;
+    const canAccessActivities =
+      permissions.includes("log_guest_movement") || permissions.length === 0;
+    const canAccessVehicles =
+      permissions.includes("log_vehicular_movement") ||
+      permissions.length === 0;
+
+    if (!canAccessGuests) {
+      if (canAccessActivities) {
+        router.replace("/activities" as any);
+      } else if (canAccessVehicles) {
+        router.replace("/vehicles" as any);
+      }
+      return;
+    }
+
     // Attempt to auto-sync guests from Server in background so local device gets fresh copy
     fetchGuests().catch(() => {});
     syncPendingLogs().catch(() => {}); // Push any locally queued offline movements
-  }, [isActivated, router, fetchGuests, syncPendingLogs]);
+  }, [isActivated, router, fetchGuests, syncPendingLogs, permissions]);
 
-  if (!isActivated) {
+  // If not activated or not allowed to view guest list, don't render this page's content
+  if (
+    !isActivated ||
+    (permissions.length > 0 && !permissions.includes("view_guest_list"))
+  ) {
     return null; // Avoid rendering flash before layout trap catches
   }
   const filteredGuests = guests.filter((g) => {
@@ -115,7 +137,6 @@ export default function IndexPage() {
   const handleReturn = (guestId: string) => {
     const activeLog = logs.find((l) => l.guestId === guestId && !l.timeIn);
     if (activeLog) {
-      // console.log({ activeLog });
       completeMovement(guestId);
     }
   };

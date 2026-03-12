@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { Button, Modal, Portal, Text, TextInput } from "react-native-paper";
+import { Button, Modal, Portal, Text } from "react-native-paper";
+import ThemedTextInput from "./ThemedTextInput";
 import { useGateStore } from "../store/useGateStore";
 import AutocompleteInput from "./AutocompleteInput";
 
@@ -66,11 +67,10 @@ export default function VehicleMovementModal({ visible, onDismiss }: Props) {
             suggestions={pastNames}
           />
 
-          <TextInput
+          <ThemedTextInput
             label="License Plate / Taxi Number"
             value={plateNumber}
             onChangeText={setPlateNumber}
-            mode="outlined"
             style={styles.input}
             autoCapitalize="characters"
           />

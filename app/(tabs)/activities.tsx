@@ -31,8 +31,6 @@ export default function ActivityFeed() {
     }, [initialSyncMovements]),
   );
 
-  console.log({ logs });
-
   const filteredLogs = logs
     .filter((log) => {
       // Find guest to check status

@@ -6,8 +6,8 @@ import {
   Portal,
   SegmentedButtons,
   Text,
-  TextInput,
 } from "react-native-paper";
+import ThemedTextInput from "./ThemedTextInput";
 import { useGateStore } from "../store/useGateStore";
 import { Guest, TransportMode } from "../types";
 import AutocompleteInput from "./AutocompleteInput";
@@ -88,11 +88,10 @@ export default function MovementLogModal({ visible, onDismiss, guest }: Props) {
           />
 
           {mode !== "walk" && (
-            <TextInput
+            <ThemedTextInput
               label="License Plate / Taxi Number"
               value={plateNumber}
               onChangeText={setPlateNumber}
-              mode="outlined"
               style={styles.input}
               autoCapitalize="characters"
             />
