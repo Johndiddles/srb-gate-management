@@ -1,7 +1,8 @@
 import { useLocalSearchParams } from "expo-router";
 import React from "react";
 import { FlatList, StyleSheet, View } from "react-native";
-import { Divider, Surface, Text } from "react-native-paper";
+import { Divider, Surface } from "react-native-paper";
+import Text from "../../src/components/ThemedText";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useGateStore } from "../../src/store/useGateStore";
 import { ActivityLog } from "../../src/types";

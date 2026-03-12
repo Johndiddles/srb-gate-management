@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { FlatList, StyleSheet, View, RefreshControl } from "react-native";
-import { Button, Searchbar, Surface, Text } from "react-native-paper";
+import { Surface } from "react-native-paper";
+import ThemedButton from "../../src/components/ThemedButton";
+import ThemedSearchbar from "../../src/components/ThemedSearchbar";
+import Text from "../../src/components/ThemedText";
 import { SafeAreaView } from "react-native-safe-area-context";
 import VehicleMovementModal from "../../src/components/VehicleMovementModal";
 import { useGateStore } from "../../src/store/useGateStore";
@@ -117,9 +120,12 @@ export default function VehiclesFeed() {
                     },
                   ]}
                 >
-                  <Button mode="outlined" onPress={() => handleLogOut(item)}>
+                  <ThemedButton
+                    mode="outlined"
+                    onPress={() => handleLogOut(item)}
+                  >
                     Log Exit
-                  </Button>
+                  </ThemedButton>
                 </View>
               )}
             </View>
@@ -132,14 +138,23 @@ export default function VehiclesFeed() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={{ fontSize: 32, fontWeight: "bold" }}>Vehicles Feed</Text>
-        <Button mode="contained" onPress={() => setModalVisible(true)}>
+        <Text style={{ fontSize: 32, fontWeight: "bold", color: "black" }}>
+          Vehicles Feed
+        </Text>
+        <ThemedButton
+          mode="contained"
+          // labelStyle={{ color: "white" }}
+          // style={{
+          //   backgroundColor: "#000",
+          // }}
+          onPress={() => setModalVisible(true)}
+        >
           Log Entry
-        </Button>
+        </ThemedButton>
       </View>
 
       <View style={styles.searchContainer}>
-        <Searchbar
+        <ThemedSearchbar
           placeholder="Search License Plate or Name..."
           onChangeText={setSearchQuery}
           value={searchQuery}

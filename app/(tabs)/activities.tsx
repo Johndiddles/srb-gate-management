@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { FlatList, StyleSheet, View, RefreshControl } from "react-native";
-import { Searchbar, Surface, Text } from "react-native-paper";
+import { Surface } from "react-native-paper";
+import ThemedSearchbar from "../../src/components/ThemedSearchbar";
+import Text from "../../src/components/ThemedText";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useGateStore } from "../../src/store/useGateStore";
 import { ActivityLog } from "../../src/types";
@@ -96,7 +98,7 @@ export default function ActivityFeed() {
         <Text style={{ fontSize: 32, fontWeight: "bold" }}>Activity Log</Text>
       </View>
       <View style={styles.searchContainer}>
-        <Searchbar
+        <ThemedSearchbar
           placeholder="Search Activities..."
           onChangeText={setSearchQuery}
           value={searchQuery}

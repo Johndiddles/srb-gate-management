@@ -1,7 +1,9 @@
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { Button, Text, Surface } from "react-native-paper";
+import { Surface } from "react-native-paper";
+import ThemedButton from "../src/components/ThemedButton";
+import Text from "../src/components/ThemedText";
 import ThemedTextInput from "../src/components/ThemedTextInput";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { activateDevice } from "../src/services/ApiService";
@@ -96,7 +98,7 @@ export default function ActivationScreen() {
             // secureTextEntry
           />
 
-          <Button
+          <ThemedButton
             mode="contained"
             onPress={handleActivation}
             loading={loading}
@@ -110,7 +112,7 @@ export default function ActivationScreen() {
             }}
           >
             Verify & Activate
-          </Button>
+          </ThemedButton>
         </View>
       </Surface>
     </SafeAreaView>

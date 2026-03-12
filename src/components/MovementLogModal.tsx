@@ -1,12 +1,8 @@
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import {
-  Button,
-  Modal,
-  Portal,
-  SegmentedButtons,
-  Text,
-} from "react-native-paper";
+import { Modal, Portal, SegmentedButtons } from "react-native-paper";
+import Text from "./ThemedText";
+import ThemedButton from "./ThemedButton";
 import ThemedTextInput from "./ThemedTextInput";
 import { useGateStore } from "../store/useGateStore";
 import { Guest, TransportMode } from "../types";
@@ -98,12 +94,16 @@ export default function MovementLogModal({ visible, onDismiss, guest }: Props) {
           )}
 
           <View style={styles.actions}>
-            <Button onPress={onDismiss} style={styles.button}>
+            <ThemedButton onPress={onDismiss} style={styles.button}>
               Cancel
-            </Button>
-            <Button mode="contained" onPress={handleSave} style={styles.button}>
+            </ThemedButton>
+            <ThemedButton
+              mode="contained"
+              onPress={handleSave}
+              style={styles.button}
+            >
               Log Exit
-            </Button>
+            </ThemedButton>
           </View>
         </View>
       </Modal>

@@ -1,14 +1,10 @@
 import { useRouter } from "expo-router";
 import React, { useState, useEffect } from "react";
 import { FlatList, StyleSheet, View, RefreshControl } from "react-native";
-import {
-  Button,
-  Searchbar,
-  SegmentedButtons,
-  Surface,
-  Text,
-  TouchableRipple,
-} from "react-native-paper";
+import { SegmentedButtons, Surface, TouchableRipple } from "react-native-paper";
+import Text from "../../src/components/ThemedText";
+import ThemedButton from "../../src/components/ThemedButton";
+import ThemedSearchbar from "../../src/components/ThemedSearchbar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MovementLogModal from "../../src/components/MovementLogModal";
 import { pickAndParseFile } from "../../src/services/FileImporter";
@@ -177,7 +173,7 @@ export default function IndexPage() {
             </View>
             <View style={styles.actions}>
               {item.status === "arrival" && (
-                <Button
+                <ThemedButton
                   mode="contained"
                   onPress={(e) => {
                     e.stopPropagation();
@@ -190,12 +186,12 @@ export default function IndexPage() {
                   }}
                 >
                   Check-In
-                </Button>
+                </ThemedButton>
               )}
               {item.status === "in-house" && (
                 <View style={styles.actionButtons}>
                   {isOut ? (
-                    <Button
+                    <ThemedButton
                       mode="contained"
                       buttonColor="#4caf50"
                       onPress={(e) => {
@@ -209,9 +205,9 @@ export default function IndexPage() {
                       }}
                     >
                       Return
-                    </Button>
+                    </ThemedButton>
                   ) : (
-                    <Button
+                    <ThemedButton
                       mode="outlined"
                       onPress={(e) => {
                         e.stopPropagation();
@@ -224,9 +220,9 @@ export default function IndexPage() {
                       }}
                     >
                       Log Exit
-                    </Button>
+                    </ThemedButton>
                   )}
-                  <Button
+                  <ThemedButton
                     mode="contained-tonal"
                     compact
                     onPress={(e) => {
@@ -239,7 +235,7 @@ export default function IndexPage() {
                     }}
                   >
                     Out
-                  </Button>
+                  </ThemedButton>
                 </View>
               )}
               {item.status === "checked-out" && (
@@ -259,7 +255,7 @@ export default function IndexPage() {
       <View style={styles.header}>
         <Text style={{ fontSize: 32, fontWeight: "bold" }}>Gate Guard</Text>
         <View style={{ flexDirection: "row", gap: 8 }}>
-          <Button
+          <ThemedButton
             icon="cloud-download"
             mode="contained-tonal"
             onPress={handleSyncApi}
@@ -267,20 +263,20 @@ export default function IndexPage() {
             compact
           >
             Sync
-          </Button>
-          <Button
+          </ThemedButton>
+          <ThemedButton
             icon="file-import"
             mode="contained-tonal"
             onPress={handleImportFile}
             compact
           >
             Import
-          </Button>
+          </ThemedButton>
         </View>
       </View>
 
       <View style={styles.searchContainer}>
-        <Searchbar
+        <ThemedSearchbar
           placeholder="Search Name or Room..."
           onChangeText={setSearchQuery}
           value={searchQuery}
