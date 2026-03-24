@@ -7,7 +7,7 @@ import ThemedButton from "../../src/components/ThemedButton";
 import ThemedSearchbar from "../../src/components/ThemedSearchbar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MovementLogModal from "../../src/components/MovementLogModal";
-import { pickAndParseFile } from "../../src/services/FileImporter";
+// import { pickAndParseFile } from "../../src/services/FileImporter";
 import { useGateStore } from "../../src/store/useGateStore";
 import { Guest } from "../../src/types";
 
@@ -15,7 +15,7 @@ export default function IndexPage() {
   const {
     guests,
     logs,
-    importGuests,
+    // importGuests,
     fetchGuests,
     updateGuestStatus,
     completeMovement,
@@ -99,18 +99,18 @@ export default function IndexPage() {
     return matchesTab && matchesSearch;
   });
 
-  const handleImportFile = async () => {
-    try {
-      const newGuests = await pickAndParseFile();
-      if (newGuests.length > 0) {
-        importGuests(newGuests);
-        alert("Import Successful");
-      }
-    } catch (e) {
-      console.error("Import failed", e);
-      alert("Import Failed");
-    }
-  };
+  // const handleImportFile = async () => {
+  //   try {
+  //     const newGuests = await pickAndParseFile();
+  //     if (newGuests.length > 0) {
+  //       importGuests(newGuests);
+  //       alert("Import Successful");
+  //     }
+  //   } catch (e) {
+  //     console.error("Import failed", e);
+  //     alert("Import Failed");
+  //   }
+  // };
 
   const handleSyncApi = async () => {
     setIsImporting(true);
@@ -264,14 +264,14 @@ export default function IndexPage() {
           >
             Sync
           </ThemedButton>
-          <ThemedButton
+          {/* <ThemedButton
             icon="file-import"
             mode="contained-tonal"
             onPress={handleImportFile}
             compact
           >
             Import
-          </ThemedButton>
+          </ThemedButton> */}
         </View>
       </View>
 
