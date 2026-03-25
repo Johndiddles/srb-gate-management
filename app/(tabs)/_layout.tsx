@@ -16,6 +16,8 @@ export default function TabLayout() {
     permissions.includes("log_guest_movement") || permissions.length === 0;
   const canAccessVehicles =
     permissions.includes("log_vehicular_movement") || permissions.length === 0;
+  const canAccessStaffParking =
+    permissions.includes("log_vehicular_movement") || permissions.length === 0;
 
   return (
     <Tabs
@@ -53,6 +55,17 @@ export default function TabLayout() {
           href: canAccessVehicles ? "/vehicles" : null,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="car.fill" color={color} />
+          ),
+        }}
+      />
+      
+      <Tabs.Screen
+        name="staff-parking"
+        options={{
+          title: "Staff",
+          href: canAccessStaffParking ? ("/staff-parking" as any) : null,
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="person.badge.key.fill" color={color} />
           ),
         }}
       />

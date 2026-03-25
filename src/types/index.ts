@@ -44,3 +44,14 @@ export interface VehicularMovement {
   timeOut?: string; // The cycle ends when they leave
   syncStatus: "pending" | "synced" | "failed";
 }
+
+export interface StaffParkingMovement {
+  id: string; // app_log_id
+  staffId: string;
+  staffName: string;
+  department: string;
+  plateNumber?: string;
+  timeIn: string;
+  timeOut?: string;
+  syncStatus: "pending" | "synced" | "failed";
+}

@@ -6,6 +6,7 @@ import {
   GuestStatus,
   TransportMode,
   VehicularMovement,
+  StaffParkingMovement,
 } from "../types";
 import { zustandStorage } from "../utils/storage";
 
@@ -20,6 +21,7 @@ interface GateState {
   guests: Guest[];
   logs: ActivityLog[];
   vehicularMovements: VehicularMovement[];
+  staffParkingMovements: StaffParkingMovement[];
   searchQuery: string;
 
   // Actions
@@ -53,6 +55,18 @@ interface GateState {
     name: string;
     reason: string;
   }) => Promise<void>;
+  logStaffVehicleIn: (input: {
+    staffId: string;
+    staffName: string;
+    department: string;
+    plateNumber?: string;
+  }) => Promise<void>;
+  logStaffVehicleOut: (input: {
+    staffId: string;
+    staffName: string;
+    department: string;
+    plateNumber?: string;
+  }) => Promise<void>;
   setSearchQuery: (query: string) => void;
   syncPendingLogs: () => Promise<void>;
   initialSyncMovements: () => Promise<void>;
@@ -69,6 +83,7 @@ export const useGateStore = create<GateState>()(
       guests: [],
       logs: [],
       vehicularMovements: [],
+      staffParkingMovements: [],
       searchQuery: "",
       isLoading: false,
       error: null,
@@ -247,6 +262,41 @@ export const useGateStore = create<GateState>()(
         get().syncPendingLogs().catch(console.error);
       },
 
+      logStaffVehicleIn: async (movementData) => {
+        set((state) => ({
+          staffParkingMovements: [
+            {
+              ...movementData,
+              id: Date.now().toString(),
+              timeIn: new Date().toISOString(),
+              syncStatus: "pending",
+            },
+            ...state.staffParkingMovements,
+          ],
+        }));
+        get().syncPendingLogs().catch(console.error);
+      },
+
+      logStaffVehicleOut: async (movementData) => {
+        set((state) => {
+          const logIndex = state.staffParkingMovements.findIndex(
+            (v) => (v.staffId === movementData.staffId || (v.plateNumber && v.plateNumber === movementData.plateNumber)) && !v.timeOut,
+          );
+
+          let updatedMovements = [...state.staffParkingMovements];
+          if (logIndex !== -1) {
+            updatedMovements[logIndex] = {
+              ...updatedMovements[logIndex],
+              timeOut: new Date().toISOString(),
+              syncStatus: "pending",
+            };
+            return { staffParkingMovements: updatedMovements };
+          }
+          return state;
+        });
+        get().syncPendingLogs().catch(console.error);
+      },
+
       initialSyncMovements: async () => {
         try {
           await get().syncPendingLogs();
@@ -255,6 +305,7 @@ export const useGateStore = create<GateState>()(
 
           const remoteLogs: ActivityLog[] = [];
           const remoteVehicles: VehicularMovement[] = [];
+          const remoteStaffParking: StaffParkingMovement[] = [];
 
           for (const m of remoteMovements as any[]) {
             if (m.type === "GUEST") {
@@ -286,6 +337,21 @@ export const useGateStore = create<GateState>()(
                   : undefined,
                 syncStatus: "synced",
               });
+            } else if (m.type === "STAFF_PARKING") {
+              remoteStaffParking.push({
+                id: m.app_log_id,
+                staffId: m.staff_id || m.guest_id || "",
+                staffName: m.name || m.guest_name || "",
+                department: m.department || m.reason || "",
+                plateNumber: m.plate_number || "",
+                timeIn: m.timeIn
+                  ? new Date(m.timeIn).toISOString()
+                  : new Date(m.timestamp || Date.now()).toISOString(),
+                timeOut: m.timeOut
+                  ? new Date(m.timeOut).toISOString()
+                  : undefined,
+                syncStatus: "synced",
+              });
             }
           }
 
@@ -296,9 +362,13 @@ export const useGateStore = create<GateState>()(
             const pendingVehicles = state.vehicularMovements.filter(
               (v) => v.syncStatus === "pending",
             );
+            const pendingStaffParking = state.staffParkingMovements.filter(
+              (s) => s.syncStatus === "pending",
+            );
 
             const pendingLogIds = new Set(pendingLogs.map((l) => l.id));
             const pendingVehicleIds = new Set(pendingVehicles.map((v) => v.id));
+            const pendingStaffParkingIds = new Set(pendingStaffParking.map((s) => s.id));
 
             const finalLogs = [
               ...pendingLogs,
@@ -310,7 +380,12 @@ export const useGateStore = create<GateState>()(
               ...remoteVehicles.filter((v) => !pendingVehicleIds.has(v.id)),
             ];
 
-            return { logs: finalLogs, vehicularMovements: finalVehicles };
+            const finalStaffParking = [
+              ...pendingStaffParking,
+              ...remoteStaffParking.filter((s) => !pendingStaffParkingIds.has(s.id)),
+            ];
+
+            return { logs: finalLogs, vehicularMovements: finalVehicles, staffParkingMovements: finalStaffParking };
           });
         } catch (e) {
           console.error("Failed to load historical movements:", e);
@@ -323,6 +398,7 @@ export const useGateStore = create<GateState>()(
           const { syncMovementToApi } = await import("../services/ApiService");
           const successfulGuestLogIds: string[] = [];
           const successfulVehicularLogs: string[] = [];
+          const successfulStaffParkingLogs: string[] = [];
 
           // Sync pending guest logs
           for (const log of logs) {
@@ -376,6 +452,34 @@ export const useGateStore = create<GateState>()(
                 }));
               } catch (e) {
                 console.error("Failed to sync vehicle movement:", v.id, e);
+              }
+            }
+          }
+
+          // Sync pending staff parking movements
+          for (const sp of get().staffParkingMovements) {
+            if (sp.syncStatus === "pending") {
+              try {
+                await syncMovementToApi({
+                  type: "STAFF_PARKING",
+                  name: sp.staffName,
+                  guest_id: sp.staffId,
+                  staff_id: sp.staffId,
+                  department: sp.department,
+                  plate_number: sp.plateNumber,
+                  app_log_id: sp.id,
+                  timeIn: sp.timeIn,
+                  timeOut: sp.timeOut,
+                });
+                successfulStaffParkingLogs.push(sp.id);
+
+                set((state) => ({
+                  staffParkingMovements: state.staffParkingMovements.map((s) =>
+                    s.id === sp.id ? { ...s, syncStatus: "synced" } : s,
+                  ),
+                }));
+              } catch (e) {
+                console.error("Failed to sync staff parking movement:", sp.id, e);
               }
             }
           }
