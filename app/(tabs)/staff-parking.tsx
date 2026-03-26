@@ -148,7 +148,7 @@ export default function StaffParkingFeed() {
           Staff Parking
         </Text>
         <ThemedButton mode="contained" onPress={() => setModalVisible(true)}>
-          Scan Entry
+          Scan
         </ThemedButton>
       </View>
 

@@ -93,7 +93,7 @@ const normalizeGuest = (row: any, index: number): Guest => {
 
   return {
     // ID composed of Room + Name + ArrivalDate for uniqueness per stay
-    id: `${room}-${String(firstName).trim()}-${String(lastName).trim()}-${arrivalDate}`,
+    _id: `${room}-${String(firstName).trim()}-${String(lastName).trim()}-${arrivalDate}`,
     firstName: String(firstName).trim(),
     lastName: String(lastName).trim(),
     roomNumber: String(room).trim(),

@@ -6,6 +6,7 @@ import Text from "./ThemedText";
 import ThemedButton from "./ThemedButton";
 import ThemedTextInput from "./ThemedTextInput";
 import { useGateStore } from "../store/useGateStore";
+import { StaffParkingMovement } from "../types";
 
 interface Props {
   visible: boolean;
@@ -13,7 +14,7 @@ interface Props {
 }
 
 export default function StaffParkingModal({ visible, onDismiss }: Props) {
-  const { logStaffVehicleIn } = useGateStore();
+  const { logStaffVehicleIn, logStaffVehicleOut, staffParkingMovements } = useGateStore();
 
   const [mode, setMode] = useState<"scan" | "manual">("scan");
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -24,6 +25,9 @@ export default function StaffParkingModal({ visible, onDismiss }: Props) {
   const [staffName, setStaffName] = useState("");
   const [department, setDepartment] = useState("");
   const [plateNumber, setPlateNumber] = useState("");
+  const [existingLog, setExistingLog] = useState<StaffParkingMovement | null>(
+    null,
+  );
 
   useEffect(() => {
     (async () => {
@@ -41,6 +45,7 @@ export default function StaffParkingModal({ visible, onDismiss }: Props) {
       setStaffName("");
       setDepartment("");
       setPlateNumber("");
+      setExistingLog(null);
     }
   }, [visible]);
 
@@ -58,6 +63,18 @@ export default function StaffParkingModal({ visible, onDismiss }: Props) {
         setStaffId(payload.staffId);
         setStaffName(`${payload.firstName} ${payload.lastName}`.trim());
         setDepartment(payload.department || "Unknown");
+
+        const inbound = staffParkingMovements.find(
+          (m) => m.staffId === payload.staffId && !m.timeOut,
+        );
+
+        if (inbound) {
+          setExistingLog(inbound);
+          setPlateNumber(inbound.plateNumber || "");
+        } else {
+          setExistingLog(null);
+        }
+
         setMode("manual");
       } else {
         throw new Error("Invalid Staff QR Code");
@@ -78,12 +95,21 @@ export default function StaffParkingModal({ visible, onDismiss }: Props) {
       return;
     }
 
-    logStaffVehicleIn({
-      staffId,
-      staffName,
-      department,
-      plateNumber,
-    });
+    if (existingLog) {
+      logStaffVehicleOut({
+        staffId,
+        staffName,
+        department,
+        plateNumber,
+      });
+    } else {
+      logStaffVehicleIn({
+        staffId,
+        staffName,
+        department,
+        plateNumber,
+      });
+    }
 
     onDismiss();
   };
@@ -107,11 +133,13 @@ export default function StaffParkingModal({ visible, onDismiss }: Props) {
               value: "scan",
               label: "Scan ID",
               icon: "qrcode-scan",
+              disabled: !!existingLog,
             },
             {
               value: "manual",
               label: "Manual Entry",
               icon: "keyboard",
+              disabled: !!existingLog,
             },
           ]}
           style={styles.segmentedControl}
@@ -145,8 +173,8 @@ export default function StaffParkingModal({ visible, onDismiss }: Props) {
           </View>
         ) : (
           <View style={styles.formContainer}>
-            <Text variant="bodyMedium" style={styles.subtitle}>
-              Record Staff vehicle or pedestrian entry.
+            <Text variant="bodyMedium" style={{ ...styles.subtitle, color: existingLog ? "#10b981" : "#666", fontWeight: existingLog ? "bold" : "normal" }}>
+              {existingLog ? "🟢 Vehicle currently inside. Log exit below." : "Record Staff vehicle or pedestrian entry."}
             </Text>
 
             <View style={styles.form}>
@@ -155,6 +183,7 @@ export default function StaffParkingModal({ visible, onDismiss }: Props) {
                 value={staffName}
                 onChangeText={setStaffName}
                 style={styles.input}
+                disabled={!!existingLog}
               />
 
               <ThemedTextInput
@@ -163,6 +192,7 @@ export default function StaffParkingModal({ visible, onDismiss }: Props) {
                 onChangeText={setStaffId}
                 style={styles.input}
                 autoCapitalize="characters"
+                disabled={!!existingLog}
               />
 
               <ThemedTextInput
@@ -170,6 +200,7 @@ export default function StaffParkingModal({ visible, onDismiss }: Props) {
                 value={department}
                 onChangeText={setDepartment}
                 style={styles.input}
+                disabled={!!existingLog}
               />
 
               <ThemedTextInput
@@ -179,6 +210,7 @@ export default function StaffParkingModal({ visible, onDismiss }: Props) {
                 onChangeText={setPlateNumber}
                 style={styles.input}
                 autoCapitalize="characters"
+                disabled={!!existingLog}
               />
             </View>
 
@@ -192,7 +224,7 @@ export default function StaffParkingModal({ visible, onDismiss }: Props) {
                 labelStyle={{ color: "white" }}
                 style={styles.button}
               >
-                Log Entry
+                {existingLog ? "Log Exit" : "Log Entry"}
               </ThemedButton>
             </View>
           </View>
