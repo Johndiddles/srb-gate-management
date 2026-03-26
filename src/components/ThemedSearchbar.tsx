@@ -26,7 +26,7 @@ export default function ThemedSearchbar(props: PaperSearchbarProps) {
             ...props.theme?.colors,
             onSurfaceVariant: "#64748b",
             elevation: {
-              ...props.theme?.colors?.elevation,
+              ...(props.theme?.colors as any)?.elevation,
               level3: "#ffffff", // Overrides default surface color in some themes
             },
           },

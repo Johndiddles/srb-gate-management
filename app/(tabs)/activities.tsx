@@ -6,6 +6,7 @@ import Text from "../../src/components/ThemedText";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useGateStore } from "../../src/store/useGateStore";
 import { ActivityLog } from "../../src/types";
+import { Colors } from "../../constants/theme";
 
 import { useFocusEffect } from "expo-router";
 
@@ -57,7 +58,7 @@ export default function ActivityFeed() {
         <View style={styles.cardContent}>
           <View style={styles.logHeader}>
             <Text variant="titleMedium">{item.guestName}</Text>
-            <Text variant="labelSmall" style={{ color: "gray" }}>
+            <Text variant="labelSmall" style={{ color: Colors.light.icon }}>
               Room {item.roomNumber}
             </Text>
           </View>
@@ -72,13 +73,13 @@ export default function ActivityFeed() {
                   📥 RETURNED: {new Date(item.timeIn).toLocaleString()}
                 </Text>
               ) : (
-                <Text variant="bodyMedium" style={{ color: "orange" }}>
+                <Text variant="bodyMedium" style={{ color: Colors.light.error }}>
                   Currently Out
                 </Text>
               )}
               <Text
                 variant="bodyMedium"
-                style={{ color: "#666", marginTop: 4 }}
+                style={{ color: Colors.light.icon, marginTop: 4 }}
               >
                 To: {item.destination}{" "}
                 {item.mode
@@ -95,7 +96,7 @@ export default function ActivityFeed() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={{ fontSize: 32, fontWeight: "bold" }}>Activity Log</Text>
+        <Text style={{ fontSize: 32, fontWeight: "bold", color: Colors.light.text }}>Activity Log</Text>
       </View>
       <View style={styles.searchContainer}>
         <ThemedSearchbar
@@ -115,7 +116,7 @@ export default function ActivityFeed() {
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
         }
         ListEmptyComponent={
-          <Text style={{ textAlign: "center", marginTop: 20, color: "gray" }}>
+          <Text style={{ textAlign: "center", marginTop: 20, color: Colors.light.icon }}>
             No activities recorded.
           </Text>
         }
@@ -127,20 +128,20 @@ export default function ActivityFeed() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f0f0f0", // App Background
   },
   header: {
     padding: 16,
-    backgroundColor: "white",
+    backgroundColor: Colors.light.background,
   },
   searchContainer: {
     padding: 16,
-    backgroundColor: "white",
+    backgroundColor: Colors.light.background,
     paddingBottom: 8,
   },
   searchBar: {
     elevation: 0,
-    backgroundColor: "#eee",
+    backgroundColor: "#f0f0f0",
   },
   list: {
     padding: 16,
@@ -148,7 +149,7 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
     borderRadius: 8,
-    backgroundColor: "white",
+    backgroundColor: Colors.light.background,
   },
   cardContent: {
     padding: 16,

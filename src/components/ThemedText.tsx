@@ -1,14 +1,15 @@
 import React from "react";
-import { Text as PaperText } from "react-native-paper";
+import { Text as PaperText, useTheme } from "react-native-paper";
 
 type PaperTextProps = React.ComponentProps<typeof PaperText>;
 
 export default function ThemedText(props: PaperTextProps) {
+  const theme = useTheme();
   return (
     <PaperText
       {...props}
       style={[
-        { color: "#1e293b" }, // Enforce default dark slate text color
+        { color: theme.colors.onSurface },
         props.style,
       ]}
     />

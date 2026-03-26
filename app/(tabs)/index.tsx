@@ -10,6 +10,7 @@ import MovementLogModal from "../../src/components/MovementLogModal";
 // import { pickAndParseFile } from "../../src/services/FileImporter";
 import { useGateStore } from "../../src/store/useGateStore";
 import { Guest } from "../../src/types";
+import { Colors } from "../../constants/theme";
 
 export default function IndexPage() {
   const {
@@ -160,7 +161,7 @@ export default function IndexPage() {
                 >
                   {item.lastName}, {item.firstName}
                 </Text>
-                <Text variant="bodySmall" style={{ color: "gray" }}>
+                <Text variant="bodySmall" style={{ color: Colors.light.icon }}>
                   {item.status === "arrival"
                     ? "Arrival"
                     : isOut
@@ -253,7 +254,7 @@ export default function IndexPage() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={{ fontSize: 32, fontWeight: "bold" }}>Gate Guard</Text>
+        <Text style={{ fontSize: 32, fontWeight: "bold", color: Colors.light.text }}>Gate Guard</Text>
         <View style={{ flexDirection: "row", gap: 8 }}>
           <ThemedButton
             icon="cloud-download"
@@ -319,26 +320,26 @@ export default function IndexPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: Colors.light.background,
   },
   header: {
     padding: 16,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "white",
+    backgroundColor: Colors.light.background,
     borderBottomWidth: 1,
-    borderBottomColor: "#f5f5f5",
+    borderBottomColor: "#e5e5e5",
     marginBottom: 16,
   },
   searchContainer: {
     paddingHorizontal: 16,
     paddingBottom: 8,
-    backgroundColor: "white",
+    backgroundColor: Colors.light.background,
   },
   searchBar: {
     elevation: 0,
-    backgroundColor: "#eee",
+    backgroundColor: "#f0f0f0",
   },
   tabs: {
     margin: 16,
@@ -349,7 +350,7 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
     borderRadius: 8,
-    backgroundColor: "white",
+    backgroundColor: Colors.light.background,
   },
   cardContent: {
     padding: 12, // Reduced padding for mobile

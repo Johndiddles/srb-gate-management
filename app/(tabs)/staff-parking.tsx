@@ -8,8 +8,9 @@ import ThemedButton from "../../src/components/ThemedButton";
 import ThemedSearchbar from "../../src/components/ThemedSearchbar";
 import Text from "../../src/components/ThemedText";
 import StaffParkingModal from "../../src/components/StaffParkingModal";
-import { useGateStore } from "../../src/store/useGateStore";
 import { StaffParkingMovement } from "../../src/types";
+import { useGateStore } from "../../src/store/useGateStore";
+import { Colors } from "../../constants/theme";
 import { isTabletByDimensions } from "@/src/utils/dimensions";
 
 const isTablet = isTabletByDimensions();
@@ -80,7 +81,7 @@ export default function StaffParkingFeed() {
             </Text>
             <Text
               variant={isTablet ? "bodyLarge" : "bodyMedium"}
-              style={{ color: "black", fontWeight: "600" }}
+              style={{ color: Colors.light.text, fontWeight: "600" }}
             >
               {item.plateNumber || "NO PLATE"}
             </Text>
@@ -144,7 +145,7 @@ export default function StaffParkingFeed() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={{ fontSize: 32, fontWeight: "bold", color: "black" }}>
+        <Text style={{ fontSize: 32, fontWeight: "bold", color: Colors.light.text }}>
           Staff Parking
         </Text>
         <ThemedButton mode="contained" onPress={() => setModalVisible(true)}>
@@ -170,7 +171,7 @@ export default function StaffParkingFeed() {
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
         }
         ListEmptyComponent={
-          <Text style={{ textAlign: "center", marginTop: 20, color: "gray" }}>
+          <Text style={{ textAlign: "center", marginTop: 20, color: Colors.light.icon }}>
             No staff parking recorded.
           </Text>
         }
@@ -187,23 +188,23 @@ export default function StaffParkingFeed() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f0f0f0",
   },
   header: {
     padding: 16,
-    backgroundColor: "white",
+    backgroundColor: Colors.light.background,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
   searchContainer: {
     padding: 16,
-    backgroundColor: "white",
+    backgroundColor: Colors.light.background,
     paddingBottom: 8,
   },
   searchBar: {
     elevation: 0,
-    backgroundColor: "#eee",
+    backgroundColor: "#f0f0f0",
   },
   list: {
     padding: 16,
@@ -211,7 +212,7 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
     borderRadius: 8,
-    backgroundColor: "white",
+    backgroundColor: Colors.light.background,
   },
   cardContent: {
     padding: 16,

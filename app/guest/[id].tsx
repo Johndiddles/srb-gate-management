@@ -6,6 +6,7 @@ import Text from "../../src/components/ThemedText";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useGateStore } from "../../src/store/useGateStore";
 import { ActivityLog } from "../../src/types";
+import { Colors } from "../../constants/theme";
 
 export default function GuestDetails() {
   const { id } = useLocalSearchParams();
@@ -39,13 +40,13 @@ export default function GuestDetails() {
             📥 RETURNED: {new Date(item.timeIn).toLocaleString()}
           </Text>
         ) : (
-          <Text variant="bodyMedium" style={{ color: "orange" }}>
+          <Text variant="bodyMedium" style={{ color: Colors.light.error }}>
             Currently Out
           </Text>
         )}
 
         {item.mode && (
-          <Text variant="bodySmall" style={{ color: "#666" }} numberOfLines={1}>
+          <Text variant="bodySmall" style={{ color: Colors.light.icon }} numberOfLines={1}>
             {item.mode.toUpperCase()}
           </Text>
         )}
@@ -63,11 +64,11 @@ export default function GuestDetails() {
         <Text variant="headlineMedium">
           {guest.firstName} {guest.lastName}
         </Text>
-        <Text variant="titleMedium" style={{ color: "gray" }}>
+        <Text variant="titleMedium" style={{ color: Colors.light.icon }}>
           Room {guest.roomNumber}
         </Text>
         <View style={styles.statusBadge}>
-          <Text variant="labelLarge" style={{ color: "white" }}>
+          <Text variant="labelLarge" style={{ color: Colors.light.background }}>
             {guest.status.toUpperCase()}
           </Text>
         </View>
@@ -91,7 +92,7 @@ export default function GuestDetails() {
           renderItem={renderLogItem}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
-            <Text style={{ fontStyle: "italic", color: "gray" }}>
+            <Text style={{ fontStyle: "italic", color: Colors.light.icon }}>
               No activity recorded.
             </Text>
           }
@@ -104,15 +105,15 @@ export default function GuestDetails() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f0f0f0",
   },
   header: {
     padding: 24,
-    backgroundColor: "white",
+    backgroundColor: Colors.light.background,
     alignItems: "center",
   },
   statusBadge: {
-    backgroundColor: "#6200ee",
+    backgroundColor: Colors.light.tint,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 16,
@@ -122,7 +123,7 @@ const styles = StyleSheet.create({
     margin: 16,
     padding: 16,
     borderRadius: 8,
-    backgroundColor: "white",
+    backgroundColor: Colors.light.background,
   },
   logSection: {
     flex: 1,

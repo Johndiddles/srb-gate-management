@@ -8,6 +8,7 @@ import ThemedTextInput from "../src/components/ThemedTextInput";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { activateDevice } from "../src/services/ApiService";
 import { useGateStore } from "../src/store/useGateStore";
+import { Colors } from "../constants/theme";
 
 export default function ActivationScreen() {
   const router = useRouter();
@@ -122,12 +123,12 @@ export default function ActivationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f0f0f0",
     justifyContent: "center",
     padding: 24,
   },
   card: {
-    backgroundColor: "white",
+    backgroundColor: Colors.light.background,
     borderRadius: 16,
     padding: 24,
   },
@@ -137,23 +138,23 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: "bold",
-    color: "#1e293b",
+    color: Colors.light.text,
     marginBottom: 8,
   },
   subtitle: {
-    color: "#64748b",
+    color: Colors.light.icon,
     textAlign: "center",
   },
   errorBox: {
     backgroundColor: "#fef2f2",
-    borderColor: "#fca5a5",
+    borderColor: Colors.light.error,
     borderWidth: 1,
     padding: 12,
     borderRadius: 8,
     marginBottom: 20,
   },
   errorText: {
-    color: "#ef4444",
+    color: Colors.light.error,
     textAlign: "center",
     fontSize: 14,
   },
@@ -161,11 +162,11 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   input: {
-    backgroundColor: "white",
+    backgroundColor: Colors.light.background,
   },
   button: {
     marginTop: 8,
     borderRadius: 8,
-    backgroundColor: "#059669",
+    backgroundColor: Colors.light.tint,
   },
 });
