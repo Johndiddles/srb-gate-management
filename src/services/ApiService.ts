@@ -65,11 +65,29 @@ export const syncMovementToApi = async (body: any) => {
   return data;
 };
 
+export const fetchStaffShiftsApi = async () => {
+  const res = await fetch(`${API_BASE_URL}/movements/staff-shifts`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+};
+
+export const syncStaffShiftsApi = async (body: any) => {
+  const res = await fetch(`${API_BASE_URL}/movements/staff-shifts/sync`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(body),
+  });
+  return handleResponse(res);
+};
+
 const ApiService = {
   activateDevice,
   fetchGuestsFromApi,
   syncMovementToApi,
   fetchDeviceMovements,
+  fetchStaffShiftsApi,
+  syncStaffShiftsApi,
 };
 
 export default ApiService;

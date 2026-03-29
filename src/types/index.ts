@@ -55,3 +55,23 @@ export interface StaffParkingMovement {
   timeOut?: string;
   syncStatus: "pending" | "synced" | "failed";
 }
+
+export interface ShiftActivity {
+  app_log_id: string;
+  timeOut: string;
+  timeIn?: string;
+  reason?: string;
+}
+
+export interface StaffShift {
+  app_log_id: string;
+  staffId: string;
+  staffName: string;
+  department: string;
+  clockIn: string;
+  clockOut?: string;
+  status: "active" | "completed";
+  deviceName?: string;
+  exits: ShiftActivity[];
+  syncStatus: "pending" | "synced" | "failed";
+}

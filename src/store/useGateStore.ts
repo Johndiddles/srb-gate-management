@@ -7,6 +7,7 @@ import {
   TransportMode,
   VehicularMovement,
   StaffParkingMovement,
+  StaffShift,
 } from "../types";
 import { zustandStorage } from "../utils/storage";
 
@@ -22,6 +23,7 @@ interface GateState {
   logs: ActivityLog[];
   vehicularMovements: VehicularMovement[];
   staffParkingMovements: StaffParkingMovement[];
+  staffShifts: StaffShift[];
   searchQuery: string;
 
   // Actions
@@ -67,6 +69,14 @@ interface GateState {
     department: string;
     plateNumber?: string;
   }) => Promise<void>;
+  logStaffShiftIn: (input: {
+    staffId: string;
+    staffName: string;
+    department: string;
+  }) => Promise<void>;
+  logStaffShiftOut: (app_log_id: string) => Promise<void>;
+  logStaffShiftExit: (input: { app_log_id: string; reason?: string }) => Promise<void>;
+  logStaffShiftEntry: (app_log_id: string) => Promise<void>;
   setSearchQuery: (query: string) => void;
   syncPendingLogs: () => Promise<void>;
   initialSyncMovements: () => Promise<void>;
@@ -84,6 +94,7 @@ export const useGateStore = create<GateState>()(
       logs: [],
       vehicularMovements: [],
       staffParkingMovements: [],
+      staffShifts: [],
       searchQuery: "",
       isLoading: false,
       error: null,
@@ -297,11 +308,94 @@ export const useGateStore = create<GateState>()(
         get().syncPendingLogs().catch(console.error);
       },
 
+      logStaffShiftIn: async (input) => {
+        set((state) => ({
+          staffShifts: [
+            {
+              app_log_id: Date.now().toString(),
+              staffId: input.staffId,
+              staffName: input.staffName,
+              department: input.department,
+              clockIn: new Date().toISOString(),
+              status: "active",
+              exits: [],
+              syncStatus: "pending",
+            },
+            ...state.staffShifts,
+          ],
+        }));
+        get().syncPendingLogs().catch(console.error);
+      },
+
+      logStaffShiftOut: async (app_log_id) => {
+        set((state) => ({
+          staffShifts: state.staffShifts.map((s) =>
+            s.app_log_id === app_log_id
+              ? {
+                  ...s,
+                  clockOut: new Date().toISOString(),
+                  status: "completed",
+                  syncStatus: "pending",
+                }
+              : s
+          ),
+        }));
+        get().syncPendingLogs().catch(console.error);
+      },
+
+      logStaffShiftExit: async (input) => {
+        set((state) => ({
+          staffShifts: state.staffShifts.map((s) =>
+            s.app_log_id === input.app_log_id
+              ? {
+                  ...s,
+                  syncStatus: "pending",
+                  exits: [
+                    ...s.exits,
+                    {
+                      app_log_id: Date.now().toString(),
+                      timeOut: new Date().toISOString(),
+                      reason: input.reason || "",
+                    },
+                  ],
+                }
+              : s
+          ),
+        }));
+        get().syncPendingLogs().catch(console.error);
+      },
+
+      logStaffShiftEntry: async (app_log_id) => {
+        set((state) => ({
+          staffShifts: state.staffShifts.map((s) => {
+            if (s.app_log_id === app_log_id) {
+              const activeExitIdx = s.exits.findIndex((e) => !e.timeIn);
+              if (activeExitIdx !== -1) {
+                const newExits = [...s.exits];
+                newExits[activeExitIdx] = {
+                  ...newExits[activeExitIdx],
+                  timeIn: new Date().toISOString(),
+                };
+                return { ...s, exits: newExits, syncStatus: "pending" };
+              }
+            }
+            return s;
+          }),
+        }));
+        get().syncPendingLogs().catch(console.error);
+      },
+
       initialSyncMovements: async () => {
         try {
           await get().syncPendingLogs();
           const ApiService = (await import("../services/ApiService")).default;
           const remoteMovements = await ApiService.fetchDeviceMovements();
+          
+          const fetchedShiftsRes = await ApiService.fetchStaffShiftsApi();
+          const remoteShifts: StaffShift[] = (fetchedShiftsRes.data || []).map((s: any) => ({
+            ...s,
+            syncStatus: "synced",
+          }));
 
           const remoteLogs: ActivityLog[] = [];
           const remoteVehicles: VehicularMovement[] = [];
@@ -385,7 +479,19 @@ export const useGateStore = create<GateState>()(
               ...remoteStaffParking.filter((s) => !pendingStaffParkingIds.has(s.id)),
             ];
 
-            return { logs: finalLogs, vehicularMovements: finalVehicles, staffParkingMovements: finalStaffParking };
+            const pendingShifts = state.staffShifts.filter((s) => s.syncStatus === "pending");
+            const pendingShiftIds = new Set(pendingShifts.map((s) => s.app_log_id));
+            const finalShifts = [
+              ...pendingShifts,
+              ...remoteShifts.filter((rs) => !pendingShiftIds.has(rs.app_log_id)),
+            ];
+
+            return { 
+              logs: finalLogs, 
+              vehicularMovements: finalVehicles, 
+              staffParkingMovements: finalStaffParking,
+              staffShifts: finalShifts 
+            };
           });
         } catch (e) {
           console.error("Failed to load historical movements:", e);
@@ -393,9 +499,9 @@ export const useGateStore = create<GateState>()(
       },
 
       syncPendingLogs: async () => {
-        const { logs, vehicularMovements } = get();
+        const { logs, vehicularMovements, staffShifts } = get();
         try {
-          const { syncMovementToApi } = await import("../services/ApiService");
+          const { syncMovementToApi, syncStaffShiftsApi } = await import("../services/ApiService");
           const successfulGuestLogIds: string[] = [];
           const successfulVehicularLogs: string[] = [];
           const successfulStaffParkingLogs: string[] = [];
@@ -453,6 +559,22 @@ export const useGateStore = create<GateState>()(
               } catch (e) {
                 console.error("Failed to sync vehicle movement:", v.id, e);
               }
+            }
+          }
+
+          const pendingShiftsList = staffShifts.filter(s => s.syncStatus === "pending");
+          if (pendingShiftsList.length > 0) {
+            try {
+              await syncStaffShiftsApi(
+                pendingShiftsList.map(({ syncStatus, ...rest }) => rest)
+              );
+              set((state) => ({
+                staffShifts: state.staffShifts.map((s) =>
+                  s.syncStatus === "pending" ? { ...s, syncStatus: "synced" } : s
+                )
+              }));
+            } catch (e) {
+              console.error("Failed to sync staff shifts", e);
             }
           }
 
