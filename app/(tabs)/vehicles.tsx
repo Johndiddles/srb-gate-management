@@ -189,7 +189,7 @@ export default function VehiclesFeed() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: Colors.light.background,
   },
   header: {
     padding: 16,

@@ -128,7 +128,7 @@ export default function ActivityFeed() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f0f0f0", // App Background
+    backgroundColor: Colors.light.background,
   },
   header: {
     padding: 16,

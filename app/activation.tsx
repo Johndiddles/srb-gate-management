@@ -123,7 +123,7 @@ export default function ActivationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: Colors.light.background,
     justifyContent: "center",
     padding: 24,
   },
