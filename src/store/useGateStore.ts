@@ -36,7 +36,7 @@ interface GateState {
   deactivateProvider: () => void;
   setGuests: (guests: Guest[]) => void;
   importGuests: (newGuests: Guest[]) => void;
-  fetchGuests: () => Promise<void>;
+  fetchGuests: (filters?: import("../services/ApiService").QueryFilters) => Promise<void>;
   updateGuestStatus: (guestId: string, status: GuestStatus) => void;
   logMovement: (input: {
     guestId: string;
@@ -79,7 +79,7 @@ interface GateState {
   logStaffShiftEntry: (app_log_id: string) => Promise<void>;
   setSearchQuery: (query: string) => void;
   syncPendingLogs: () => Promise<void>;
-  initialSyncMovements: () => Promise<void>;
+  initialSyncMovements: (filters?: import("../services/ApiService").QueryFilters) => Promise<void>;
 }
 
 export const useGateStore = create<GateState>()(
@@ -129,11 +129,11 @@ export const useGateStore = create<GateState>()(
           return { guests: [...state.guests, ...toAdd] };
         }),
 
-      fetchGuests: async () => {
+      fetchGuests: async (filters) => {
         set({ isLoading: true, error: null });
         try {
           const ApiService = (await import("../services/ApiService")).default;
-          const guests = await ApiService.fetchGuestsFromApi();
+          const guests = await ApiService.fetchGuestsFromApi(filters);
           set({ guests, isLoading: false });
         } catch (e: any) {
           set({
@@ -385,13 +385,13 @@ export const useGateStore = create<GateState>()(
         get().syncPendingLogs().catch(console.error);
       },
 
-      initialSyncMovements: async () => {
+      initialSyncMovements: async (filters) => {
         try {
           await get().syncPendingLogs();
           const ApiService = (await import("../services/ApiService")).default;
-          const remoteMovements = await ApiService.fetchDeviceMovements();
+          const remoteMovements = await ApiService.fetchDeviceMovements(filters);
           
-          const fetchedShiftsRes = await ApiService.fetchStaffShiftsApi();
+          const fetchedShiftsRes = await ApiService.fetchStaffShiftsApi(filters);
           const remoteShifts: StaffShift[] = (fetchedShiftsRes.data || []).map((s: any) => ({
             ...s,
             syncStatus: "synced",

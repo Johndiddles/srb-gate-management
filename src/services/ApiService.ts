@@ -11,6 +11,27 @@ const getHeaders = () => {
   };
 };
 
+export interface QueryFilters {
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+  name?: string;
+  department?: string;
+  licensePlate?: string;
+  staffId?: string;
+  status?: string;
+}
+
+const buildQueryParams = (filters?: QueryFilters) => {
+  if (!filters) return "";
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) params.append(key, String(value));
+  });
+  const queryString = params.toString();
+  return queryString ? `?${queryString}` : "";
+};
+
 const handleResponse = async (res: Response) => {
   if (res.status === 299) {
     useGateStore.getState().deactivateProvider();
@@ -39,16 +60,16 @@ export const activateDevice = async (
   return handleResponse(res); // { message, permissions, token }
 };
 
-export const fetchGuestsFromApi = async (): Promise<Guest[]> => {
-  const res = await fetch(`${API_BASE_URL}/guests`, {
+export const fetchGuestsFromApi = async (filters?: QueryFilters): Promise<Guest[]> => {
+  const res = await fetch(`${API_BASE_URL}/guests${buildQueryParams(filters)}`, {
     headers: getHeaders(),
   });
   const data = await handleResponse(res);
   return data || [];
 };
 
-const fetchDeviceMovements = async () => {
-  const res = await fetch(`${API_BASE_URL}/movements`, {
+const fetchDeviceMovements = async (filters?: QueryFilters) => {
+  const res = await fetch(`${API_BASE_URL}/movements${buildQueryParams(filters)}`, {
     headers: getHeaders(),
   });
   return handleResponse(res);
@@ -65,8 +86,8 @@ export const syncMovementToApi = async (body: any) => {
   return data;
 };
 
-export const fetchStaffShiftsApi = async () => {
-  const res = await fetch(`${API_BASE_URL}/movements/staff-shifts`, {
+export const fetchStaffShiftsApi = async (filters?: QueryFilters) => {
+  const res = await fetch(`${API_BASE_URL}/movements/staff-shifts${buildQueryParams(filters)}`, {
     headers: getHeaders(),
   });
   return handleResponse(res);
