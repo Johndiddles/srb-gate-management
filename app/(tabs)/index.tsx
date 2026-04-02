@@ -58,12 +58,20 @@ export default function IndexPage() {
     const canAccessVehicles =
       permissions.includes("log_vehicular_movement") ||
       permissions.length === 0;
+    const canAccessStaffParking =
+      permissions.includes("log_staff_parking") || permissions.length === 0;
+    const canAccessStaffMovement =
+      permissions.includes("log_staff_movement") || permissions.length === 0;
 
     if (!canAccessGuests) {
       if (canAccessActivities) {
         router.replace("/activities" as any);
       } else if (canAccessVehicles) {
         router.replace("/vehicles" as any);
+      } else if (canAccessStaffParking) {
+        router.replace("/staff-parking" as any);
+      } else if (canAccessStaffMovement) {
+        router.replace("/staff-movement" as any);
       }
       return;
     }

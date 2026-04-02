@@ -45,6 +45,10 @@ export default function ActivationScreen() {
         perms.includes("log_guest_movement") || perms.length === 0;
       const canAccessVehicles =
         perms.includes("log_vehicular_movement") || perms.length === 0;
+      const canAccessStaffParking =
+        perms.includes("log_staff_parking") || perms.length === 0;
+      const canAccessStaffMovement =
+        perms.includes("log_staff_movement") || perms.length === 0;
 
       const initialRoute = canAccessGuests
         ? "/(tabs)/"
@@ -52,7 +56,11 @@ export default function ActivationScreen() {
           ? "/(tabs)/activities"
           : canAccessVehicles
             ? "/(tabs)/vehicles"
-            : "/(tabs)/";
+            : canAccessStaffParking
+              ? "/(tabs)/staff-parking"
+              : canAccessStaffMovement
+                ? "/(tabs)/staff-movement"
+                : "/(tabs)/";
 
       // Navigate to main tabs
       router.replace(initialRoute as any);
