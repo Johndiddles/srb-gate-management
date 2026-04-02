@@ -60,18 +60,26 @@ export const activateDevice = async (
   return handleResponse(res); // { message, permissions, token }
 };
 
-export const fetchGuestsFromApi = async (filters?: QueryFilters): Promise<Guest[]> => {
-  const res = await fetch(`${API_BASE_URL}/guests${buildQueryParams(filters)}`, {
-    headers: getHeaders(),
-  });
+export const fetchGuestsFromApi = async (
+  filters?: QueryFilters,
+): Promise<Guest[]> => {
+  const res = await fetch(
+    `${API_BASE_URL}/guests${buildQueryParams(filters)}`,
+    {
+      headers: getHeaders(),
+    },
+  );
   const data = await handleResponse(res);
   return data || [];
 };
 
 const fetchDeviceMovements = async (filters?: QueryFilters) => {
-  const res = await fetch(`${API_BASE_URL}/movements${buildQueryParams(filters)}`, {
-    headers: getHeaders(),
-  });
+  const res = await fetch(
+    `${API_BASE_URL}/movements${buildQueryParams(filters)}`,
+    {
+      headers: getHeaders(),
+    },
+  );
   return handleResponse(res);
 };
 
@@ -87,9 +95,12 @@ export const syncMovementToApi = async (body: any) => {
 };
 
 export const fetchStaffShiftsApi = async (filters?: QueryFilters) => {
-  const res = await fetch(`${API_BASE_URL}/movements/staff-shifts${buildQueryParams(filters)}`, {
-    headers: getHeaders(),
-  });
+  const res = await fetch(
+    `${API_BASE_URL}/movements/staff-shifts${buildQueryParams(filters)}`,
+    {
+      headers: getHeaders(),
+    },
+  );
   return handleResponse(res);
 };
 

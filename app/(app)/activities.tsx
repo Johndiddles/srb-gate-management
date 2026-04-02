@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FlatList, StyleSheet, View, RefreshControl } from "react-native";
+import { FlatList, StyleSheet, View, RefreshControl, TouchableOpacity } from "react-native";
 import { Surface } from "react-native-paper";
 import ThemedSearchbar from "../../src/components/ThemedSearchbar";
 import Text from "../../src/components/ThemedText";
@@ -8,7 +8,8 @@ import { useGateStore } from "../../src/store/useGateStore";
 import { ActivityLog } from "../../src/types";
 import { Colors } from "../../constants/theme";
 
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, router } from "expo-router";
+import { IconSymbol } from "../../components/ui/icon-symbol";
 
 export default function ActivityFeed() {
   const { logs, guests, syncPendingLogs, initialSyncMovements } =
@@ -95,7 +96,10 @@ export default function ActivityFeed() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { flexDirection: "row", alignItems: "center" }]}>
+        <TouchableOpacity onPress={() => router.back()} style={{ padding: 4, marginRight: 8 }}>
+          <IconSymbol name="chevron.left" size={32} color={Colors.light.text} />
+        </TouchableOpacity>
         <Text style={{ fontSize: 32, fontWeight: "bold", color: Colors.light.text }}>Activity Log</Text>
       </View>
       <View style={styles.searchContainer}>

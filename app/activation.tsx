@@ -38,29 +38,8 @@ export default function ActivationScreen() {
         data.token,
       );
 
-      const perms = data.permissions || [];
-      const canAccessGuests =
-        perms.includes("view_guest_list") || perms.length === 0;
-      const canAccessActivities =
-        perms.includes("log_guest_movement") || perms.length === 0;
-      const canAccessVehicles =
-        perms.includes("log_vehicular_movement") || perms.length === 0;
-      const canAccessStaffParking =
-        perms.includes("log_staff_parking") || perms.length === 0;
-      const canAccessStaffMovement =
-        perms.includes("log_staff_movement") || perms.length === 0;
-
-      const initialRoute = canAccessGuests
-        ? "/(tabs)/"
-        : canAccessActivities
-          ? "/(tabs)/activities"
-          : canAccessVehicles
-            ? "/(tabs)/vehicles"
-            : canAccessStaffParking
-              ? "/(tabs)/staff-parking"
-              : canAccessStaffMovement
-                ? "/(tabs)/staff-movement"
-                : "/(tabs)/";
+      // Navigate natively explicitly into the generic structural dashboard dropping fallback paths explicitly since Grid handles permissions natively.
+      const initialRoute = "/(app)/dashboard";
 
       // Navigate to main tabs
       router.replace(initialRoute as any);

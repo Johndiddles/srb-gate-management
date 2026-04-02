@@ -36,7 +36,9 @@ interface GateState {
   deactivateProvider: () => void;
   setGuests: (guests: Guest[]) => void;
   importGuests: (newGuests: Guest[]) => void;
-  fetchGuests: (filters?: import("../services/ApiService").QueryFilters) => Promise<void>;
+  fetchGuests: (
+    filters?: import("../services/ApiService").QueryFilters,
+  ) => Promise<void>;
   updateGuestStatus: (guestId: string, status: GuestStatus) => void;
   logMovement: (input: {
     guestId: string;
@@ -75,11 +77,16 @@ interface GateState {
     department: string;
   }) => Promise<void>;
   logStaffShiftOut: (app_log_id: string) => Promise<void>;
-  logStaffShiftExit: (input: { app_log_id: string; reason?: string }) => Promise<void>;
+  logStaffShiftExit: (input: {
+    app_log_id: string;
+    reason?: string;
+  }) => Promise<void>;
   logStaffShiftEntry: (app_log_id: string) => Promise<void>;
   setSearchQuery: (query: string) => void;
   syncPendingLogs: () => Promise<void>;
-  initialSyncMovements: (filters?: import("../services/ApiService").QueryFilters) => Promise<void>;
+  initialSyncMovements: (
+    filters?: import("../services/ApiService").QueryFilters,
+  ) => Promise<void>;
 }
 
 export const useGateStore = create<GateState>()(
@@ -298,7 +305,11 @@ export const useGateStore = create<GateState>()(
       logStaffVehicleOut: async (movementData) => {
         set((state) => {
           const logIndex = state.staffParkingMovements.findIndex(
-            (v) => (v.staffId === movementData.staffId || (v.plateNumber && v.plateNumber === movementData.plateNumber)) && !v.timeOut,
+            (v) =>
+              (v.staffId === movementData.staffId ||
+                (v.plateNumber &&
+                  v.plateNumber === movementData.plateNumber)) &&
+              !v.timeOut,
           );
 
           let updatedMovements = [...state.staffParkingMovements];
@@ -344,7 +355,7 @@ export const useGateStore = create<GateState>()(
                   status: "completed",
                   syncStatus: "pending",
                 }
-              : s
+              : s,
           ),
         }));
         get().syncPendingLogs().catch(console.error);
@@ -366,7 +377,7 @@ export const useGateStore = create<GateState>()(
                     },
                   ],
                 }
-              : s
+              : s,
           ),
         }));
         get().syncPendingLogs().catch(console.error);
@@ -396,13 +407,17 @@ export const useGateStore = create<GateState>()(
         try {
           await get().syncPendingLogs();
           const ApiService = (await import("../services/ApiService")).default;
-          const remoteMovements = await ApiService.fetchDeviceMovements(filters);
-          
-          const fetchedShiftsRes = await ApiService.fetchStaffShiftsApi(filters);
-          const remoteShifts: StaffShift[] = (fetchedShiftsRes.data || []).map((s: any) => ({
-            ...s,
-            syncStatus: "synced",
-          }));
+          const remoteMovements =
+            await ApiService.fetchDeviceMovements(filters);
+
+          const fetchedShiftsRes =
+            await ApiService.fetchStaffShiftsApi(filters);
+          const remoteShifts: StaffShift[] = (fetchedShiftsRes.data || []).map(
+            (s: any) => ({
+              ...s,
+              syncStatus: "synced",
+            }),
+          );
 
           const remoteLogs: ActivityLog[] = [];
           const remoteVehicles: VehicularMovement[] = [];
@@ -469,7 +484,9 @@ export const useGateStore = create<GateState>()(
 
             const pendingLogIds = new Set(pendingLogs.map((l) => l.id));
             const pendingVehicleIds = new Set(pendingVehicles.map((v) => v.id));
-            const pendingStaffParkingIds = new Set(pendingStaffParking.map((s) => s.id));
+            const pendingStaffParkingIds = new Set(
+              pendingStaffParking.map((s) => s.id),
+            );
 
             const finalLogs = [
               ...pendingLogs,
@@ -483,21 +500,29 @@ export const useGateStore = create<GateState>()(
 
             const finalStaffParking = [
               ...pendingStaffParking,
-              ...remoteStaffParking.filter((s) => !pendingStaffParkingIds.has(s.id)),
+              ...remoteStaffParking.filter(
+                (s) => !pendingStaffParkingIds.has(s.id),
+              ),
             ];
 
-            const pendingShifts = state.staffShifts.filter((s) => s.syncStatus === "pending");
-            const pendingShiftIds = new Set(pendingShifts.map((s) => s.app_log_id));
+            const pendingShifts = state.staffShifts.filter(
+              (s) => s.syncStatus === "pending",
+            );
+            const pendingShiftIds = new Set(
+              pendingShifts.map((s) => s.app_log_id),
+            );
             const finalShifts = [
               ...pendingShifts,
-              ...remoteShifts.filter((rs) => !pendingShiftIds.has(rs.app_log_id)),
+              ...remoteShifts.filter(
+                (rs) => !pendingShiftIds.has(rs.app_log_id),
+              ),
             ];
 
-            return { 
-              logs: finalLogs, 
-              vehicularMovements: finalVehicles, 
+            return {
+              logs: finalLogs,
+              vehicularMovements: finalVehicles,
               staffParkingMovements: finalStaffParking,
-              staffShifts: finalShifts 
+              staffShifts: finalShifts,
             };
           });
         } catch (e) {
@@ -508,7 +533,8 @@ export const useGateStore = create<GateState>()(
       syncPendingLogs: async () => {
         const { logs, vehicularMovements, staffShifts } = get();
         try {
-          const { syncMovementToApi, syncStaffShiftsApi } = await import("../services/ApiService");
+          const { syncMovementToApi, syncStaffShiftsApi } =
+            await import("../services/ApiService");
           const successfulGuestLogIds: string[] = [];
           const successfulVehicularLogs: string[] = [];
           const successfulStaffParkingLogs: string[] = [];
@@ -569,16 +595,20 @@ export const useGateStore = create<GateState>()(
             }
           }
 
-          const pendingShiftsList = staffShifts.filter(s => s.syncStatus === "pending");
+          const pendingShiftsList = staffShifts.filter(
+            (s) => s.syncStatus === "pending",
+          );
           if (pendingShiftsList.length > 0) {
             try {
               await syncStaffShiftsApi(
-                pendingShiftsList.map(({ syncStatus, ...rest }) => rest)
+                pendingShiftsList.map(({ syncStatus, ...rest }) => rest),
               );
               set((state) => ({
                 staffShifts: state.staffShifts.map((s) =>
-                  s.syncStatus === "pending" ? { ...s, syncStatus: "synced" } : s
-                )
+                  s.syncStatus === "pending"
+                    ? { ...s, syncStatus: "synced" }
+                    : s,
+                ),
               }));
             } catch (e) {
               console.error("Failed to sync staff shifts", e);
@@ -608,7 +638,11 @@ export const useGateStore = create<GateState>()(
                   ),
                 }));
               } catch (e) {
-                console.error("Failed to sync staff parking movement:", sp.id, e);
+                console.error(
+                  "Failed to sync staff parking movement:",
+                  sp.id,
+                  e,
+                );
               }
             }
           }
