@@ -102,6 +102,15 @@ export const syncStaffShiftsApi = async (body: any) => {
   return handleResponse(res);
 };
 
+export const updateGuestStatusApi = async (guestId: string, status: string) => {
+  const res = await fetch(`${API_BASE_URL}/guests/${guestId}`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify({ status }),
+  });
+  return handleResponse(res);
+};
+
 const ApiService = {
   activateDevice,
   fetchGuestsFromApi,
@@ -109,6 +118,7 @@ const ApiService = {
   fetchDeviceMovements,
   fetchStaffShiftsApi,
   syncStaffShiftsApi,
+  updateGuestStatusApi,
 };
 
 export default ApiService;

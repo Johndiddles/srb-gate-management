@@ -144,12 +144,19 @@ export const useGateStore = create<GateState>()(
         }
       },
 
-      updateGuestStatus: (guestId, status) =>
+      updateGuestStatus: async (guestId, status) => {
         set((state) => ({
           guests: state.guests.map((g) =>
             g._id === guestId ? { ...g, status } : g,
           ),
-        })),
+        }));
+        try {
+          const ApiService = (await import("../services/ApiService")).default;
+          await ApiService.updateGuestStatusApi(guestId, status);
+        } catch (e) {
+          console.error("Failed to sync guest status to API", e);
+        }
+      },
 
       logMovement: async (logData) => {
         set((state) => {
