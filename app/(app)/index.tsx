@@ -3,19 +3,28 @@ import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 // Removed next/navigation
 // Let's use `expo-router`'s router instead!
-import { router } from "expo-router"; 
+import { router } from "expo-router";
 import Text from "../../src/components/ThemedText";
 // Header removed
 import { Colors } from "../../constants/theme";
 import { useGateStore } from "../../src/store/useGateStore";
 import { IconSymbol } from "../../components/ui/icon-symbol";
+import { validateLicensePing } from "../../src/services/ApiService";
 
 export default function DashboardHub() {
-  const { permissions, deactivateProvider, isActivated } = useGateStore();
+  const {
+    permissions,
+    // deactivateProvider,
+    isActivated,
+  } = useGateStore();
 
   useEffect(() => {
     if (!isActivated) {
       router.replace("/activation" as any);
+    } else {
+      // Lightly ping the backend to verify the device's license is still active!
+      // If it returns 299, ApiService throws and `deactivateProvider` drops isActivated instantly forcing a react redirect properly!
+      validateLicensePing().catch(e => console.log("Silent verification hit:", e.message));
     }
   }, [isActivated]);
 
@@ -30,18 +39,18 @@ export default function DashboardHub() {
   const canAccessStaffMovement =
     permissions.includes("log_staff_movement") || permissions.length === 0;
 
-  const handleDeactivate = () => {
-    // Actually handle device deactivation
-    deactivateProvider();
-    router.replace("/activation" as any);
-  };
+  // const handleDeactivate = () => {
+  //   // Actually handle device deactivation
+  //   deactivateProvider();
+  //   router.replace("/activation" as any);
+  // };
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text variant="titleLarge" style={styles.title}>
-            Gate Guard Modules
+            Gate Guard
           </Text>
           <Text variant="bodyMedium" style={styles.subtitle}>
             Select a module below to begin tracking logs.
@@ -55,10 +64,21 @@ export default function DashboardHub() {
               activeOpacity={0.7}
               onPress={() => router.push("/(app)/guests" as any)}
             >
-              <View style={[styles.iconContainer, { backgroundColor: Colors.light.tint + "20" }]}>
-                <IconSymbol size={32} name="house.fill" color={Colors.light.tint} />
+              <View
+                style={[
+                  styles.iconContainer,
+                  { backgroundColor: Colors.light.tint + "20" },
+                ]}
+              >
+                <IconSymbol
+                  size={32}
+                  name="house.fill"
+                  color={Colors.light.tint}
+                />
               </View>
-              <Text variant="titleMedium" style={styles.cardTitle}>Guest List</Text>
+              <Text variant="titleMedium" style={styles.cardTitle}>
+                Guest List
+              </Text>
             </TouchableOpacity>
           )}
 
@@ -68,10 +88,14 @@ export default function DashboardHub() {
               activeOpacity={0.7}
               onPress={() => router.push("/(app)/activities" as any)}
             >
-              <View style={[styles.iconContainer, { backgroundColor: "#FF980020" }]}>
+              <View
+                style={[styles.iconContainer, { backgroundColor: "#FF980020" }]}
+              >
                 <IconSymbol size={32} name="local-activity" color="#FF9800" />
               </View>
-              <Text variant="titleMedium" style={styles.cardTitle}>Activity Feed</Text>
+              <Text variant="titleMedium" style={styles.cardTitle}>
+                Activity Feed
+              </Text>
             </TouchableOpacity>
           )}
 
@@ -81,10 +105,14 @@ export default function DashboardHub() {
               activeOpacity={0.7}
               onPress={() => router.push("/(app)/vehicles" as any)}
             >
-              <View style={[styles.iconContainer, { backgroundColor: "#4CAF5020" }]}>
+              <View
+                style={[styles.iconContainer, { backgroundColor: "#4CAF5020" }]}
+              >
                 <IconSymbol size={32} name="car.fill" color="#4CAF50" />
               </View>
-              <Text variant="titleMedium" style={styles.cardTitle}>Vehicles</Text>
+              <Text variant="titleMedium" style={styles.cardTitle}>
+                Vehicles
+              </Text>
             </TouchableOpacity>
           )}
 
@@ -94,10 +122,18 @@ export default function DashboardHub() {
               activeOpacity={0.7}
               onPress={() => router.push("/(app)/staff-parking" as any)}
             >
-              <View style={[styles.iconContainer, { backgroundColor: "#9C27B020" }]}>
-                <IconSymbol size={32} name="person.badge.key.fill" color="#9C27B0" />
+              <View
+                style={[styles.iconContainer, { backgroundColor: "#9C27B020" }]}
+              >
+                <IconSymbol
+                  size={32}
+                  name="person.badge.key.fill"
+                  color="#9C27B0"
+                />
               </View>
-              <Text variant="titleMedium" style={styles.cardTitle}>Staff Parking</Text>
+              <Text variant="titleMedium" style={styles.cardTitle}>
+                Staff Parking
+              </Text>
             </TouchableOpacity>
           )}
 
@@ -107,17 +143,21 @@ export default function DashboardHub() {
               activeOpacity={0.7}
               onPress={() => router.push("/(app)/staff-movement" as any)}
             >
-              <View style={[styles.iconContainer, { backgroundColor: "#E91E6320" }]}>
+              <View
+                style={[styles.iconContainer, { backgroundColor: "#E91E6320" }]}
+              >
                 <IconSymbol size={32} name="timer" color="#E91E63" />
               </View>
-              <Text variant="titleMedium" style={styles.cardTitle}>Staff Shifts</Text>
+              <Text variant="titleMedium" style={styles.cardTitle}>
+                Staff Shifts
+              </Text>
             </TouchableOpacity>
           )}
         </View>
 
-        <TouchableOpacity style={styles.deactivateBtn} onPress={handleDeactivate}>
+        {/* <TouchableOpacity style={styles.deactivateBtn} onPress={handleDeactivate}>
           <Text style={styles.deactivateText}>Deactivate Device</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </ScrollView>
     </SafeAreaView>
   );

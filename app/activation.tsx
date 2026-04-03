@@ -39,7 +39,7 @@ export default function ActivationScreen() {
       );
 
       // Navigate natively explicitly into the generic structural dashboard dropping fallback paths explicitly since Grid handles permissions natively.
-      const initialRoute = "/(app)/dashboard";
+      const initialRoute = "/";
 
       // Navigate to main tabs
       router.replace(initialRoute as any);

@@ -60,6 +60,13 @@ export const activateDevice = async (
   return handleResponse(res); // { message, permissions, token }
 };
 
+export const validateLicensePing = async () => {
+  const res = await fetch(`${API_BASE_URL}/licenses/ping`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+};
+
 export const fetchGuestsFromApi = async (
   filters?: QueryFilters,
 ): Promise<Guest[]> => {
