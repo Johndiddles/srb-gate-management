@@ -122,6 +122,11 @@ export const useGateStore = create<GateState>()(
           deviceName: null,
           deviceToken: null,
           permissions: [],
+          guests: [],
+          logs: [],
+          vehicularMovements: [],
+          staffParkingMovements: [],
+          staffShifts: [],
         }),
 
       setGuests: (guests) => set({ guests }),
