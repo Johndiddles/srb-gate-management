@@ -99,78 +99,88 @@ export default function ActivationScreen() {
           </SafeAreaView>
         </View>
       ) : (
-      <Surface style={styles.card} elevation={2}>
-        <View style={styles.header}>
-          <Text variant="headlineMedium" style={styles.title}>
-            App Activation
-          </Text>
-          <Text variant="bodyMedium" style={styles.subtitle}>
-            Enter your provisioned credentials to access this device.
-          </Text>
-        </View>
-
-        {!!error && (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
+        <Surface style={styles.card} elevation={2}>
+          <View style={styles.header}>
+            <Text variant="headlineMedium" style={styles.title}>
+              App Activation
+            </Text>
+            <Text variant="bodyMedium" style={styles.subtitle}>
+              Enter your provisioned credentials to access this device.
+            </Text>
           </View>
-        )}
 
-        <View style={styles.form}>
-          <ThemedTextInput
-            label="Device Name"
-            value={deviceName}
-            onChangeText={setDeviceName}
-            style={styles.input}
-            autoCapitalize="words"
-          />
+          {!!error && (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
 
-          <ThemedTextInput
-            label="License Key"
-            value={licenseKey}
-            onChangeText={setLicenseKey}
-            style={styles.input}
-            autoCapitalize="none"
-            // secureTextEntry
-          />
+          <View style={styles.form}>
+            <ThemedTextInput
+              label="Device Name"
+              value={deviceName}
+              onChangeText={setDeviceName}
+              style={styles.input}
+              autoCapitalize="words"
+            />
 
-          <ThemedButton
-            mode="contained"
-            onPress={handleActivation}
-            loading={loading}
-            disabled={loading}
-            style={styles.button}
-            contentStyle={{ paddingVertical: 8 }}
-            labelStyle={{
-              color: "white",
-              fontSize: 18,
-              fontWeight: "semibold",
-            }}
-          >
-            Verify & Activate
-          </ThemedButton>
+            <ThemedTextInput
+              label="License Key"
+              value={licenseKey}
+              onChangeText={setLicenseKey}
+              style={styles.input}
+              autoCapitalize="none"
+              // secureTextEntry
+            />
 
-          <ThemedButton
-            mode="outlined"
-            onPress={async () => {
-              if (!permission?.granted) {
-                const result = await requestPermission();
-                if (!result.granted) {
-                  setError("Camera permission is required to scan codes.");
-                  return;
+            <ThemedButton
+              mode="contained"
+              onPress={() => handleActivation()}
+              loading={loading}
+              disabled={loading}
+              style={styles.button}
+              contentStyle={{ paddingVertical: 8 }}
+              labelStyle={{
+                color: "white",
+                fontSize: 18,
+                fontWeight: "semibold",
+              }}
+            >
+              Verify & Activate
+            </ThemedButton>
+
+            <ThemedButton
+              mode="outlined"
+              onPress={async () => {
+                if (!permission?.granted) {
+                  const result = await requestPermission();
+                  if (!result.granted) {
+                    setError("Camera permission is required to scan codes.");
+                    return;
+                  }
                 }
-              }
-              setScanned(false);
-              setIsScanning(true);
-            }}
-            icon={() => <MaterialCommunityIcons name="qrcode-scan" size={20} color={Colors.light.tint} />}
-            style={styles.scanButton}
-            contentStyle={{ paddingVertical: 8 }}
-            labelStyle={{ color: Colors.light.tint, fontSize: 16, fontWeight: "600" }}
-          >
-            Scan QR Code
-          </ThemedButton>
-        </View>
-      </Surface>
+                setScanned(false);
+                setIsScanning(true);
+              }}
+              icon={() => (
+                <MaterialCommunityIcons
+                  name="qrcode-scan"
+                  size={20}
+                  color={Colors.light.tint}
+                />
+              )}
+              style={styles.scanButton}
+              contentStyle={{ paddingVertical: 8 }}
+              labelStyle={{
+                color: Colors.light.tint,
+                fontSize: 16,
+                fontWeight: "600",
+              }}
+            >
+              Scan QR Code
+            </ThemedButton>
+          </View>
+        </Surface>
       )}
     </SafeAreaView>
   );
