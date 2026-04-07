@@ -18,6 +18,7 @@ interface GateState {
   deviceName: string | null;
   deviceToken: string | null;
   licenseKey: string | null;
+  location: string | null;
   permissions: string[];
   guests: Guest[];
   logs: ActivityLog[];
@@ -32,6 +33,7 @@ interface GateState {
     deviceName: string,
     permissions: string[],
     deviceToken: string,
+    location?: string,
   ) => void;
   deactivateProvider: () => void;
   setGuests: (guests: Guest[]) => void;
@@ -96,6 +98,7 @@ export const useGateStore = create<GateState>()(
       deviceName: null,
       deviceToken: null,
       licenseKey: null,
+      location: null,
       permissions: [],
       guests: [],
       logs: [],
@@ -106,13 +109,14 @@ export const useGateStore = create<GateState>()(
       isLoading: false,
       error: null,
 
-      activateProvider: (licenseKey, deviceName, permissions, deviceToken) =>
+      activateProvider: (licenseKey, deviceName, permissions, deviceToken, location) =>
         set({
           isActivated: true,
           licenseKey,
           deviceName,
           permissions,
           deviceToken,
+          location: location || null,
         }),
 
       deactivateProvider: () =>
@@ -121,6 +125,7 @@ export const useGateStore = create<GateState>()(
           licenseKey: null,
           deviceName: null,
           deviceToken: null,
+          location: null,
           permissions: [],
           guests: [],
           logs: [],

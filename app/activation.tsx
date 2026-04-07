@@ -44,6 +44,7 @@ export default function ActivationScreen() {
         finalDeviceName,
         data.permissions || [],
         data.token,
+        data.location,
       );
 
       // Navigate natively explicitly into the generic structural dashboard dropping fallback paths explicitly since Grid handles permissions natively.
