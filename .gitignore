@@ -48,4 +48,4 @@ build-*
 
 # sample files
 assets/sample_*
-assets/generate_guests.py
+assets/generate_*.py

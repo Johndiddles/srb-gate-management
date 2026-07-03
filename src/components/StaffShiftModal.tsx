@@ -195,8 +195,8 @@ export default function StaffShiftModal({ visible, onDismiss }: Props) {
             >
               {activeShift
                 ? isCurrentlyOut
-                  ? "🔴 Employee is currently OUT on an authorized exit."
-                  : "🟢 Employee is checked in for their shift."
+                  ? `🔴 ${activeShift.staffName} is currently OUT.`
+                  : `🟢 ${activeShift.staffName} is checked in for their shift.`
                 : "Record Staff Shift entry below."}
             </Text>
 
@@ -271,7 +271,10 @@ export default function StaffShiftModal({ visible, onDismiss }: Props) {
                 <>
                   <ThemedButton
                     onPress={handleClockOut}
-                    style={{ ...styles.button, borderColor: Colors.light.error }}
+                    style={{
+                      ...styles.button,
+                      borderColor: Colors.light.error,
+                    }}
                     labelStyle={{ color: Colors.light.error }}
                   >
                     Clock Out for Day
@@ -282,7 +285,7 @@ export default function StaffShiftModal({ visible, onDismiss }: Props) {
                     labelStyle={{ color: "white" }}
                     style={styles.button}
                   >
-                    Log Returnable Exit
+                    Log Gate Pass
                   </ThemedButton>
                 </>
               )}

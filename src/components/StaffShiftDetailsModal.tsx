@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import { StyleSheet, View, ScrollView } from "react-native";
-import { Modal, Portal, Surface, Divider, IconButton } from "react-native-paper";
+import {
+  Modal,
+  Portal,
+  Surface,
+  Divider,
+  IconButton,
+} from "react-native-paper";
 import Text from "./ThemedText";
 import { Colors } from "../../constants/theme";
 import ThemedButton from "./ThemedButton";
@@ -17,7 +23,8 @@ export default function StaffShiftDetailsModal({
   onDismiss: () => void;
   shift: StaffShift | null;
 }) {
-  const { logStaffShiftOut, logStaffShiftExit, logStaffShiftEntry } = useGateStore();
+  const { logStaffShiftOut, logStaffShiftExit, logStaffShiftEntry } =
+    useGateStore();
   const [loading, setLoading] = useState(false);
 
   if (!shift) return null;
@@ -50,7 +57,10 @@ export default function StaffShiftDetailsModal({
       if (isCurrentlyOut) {
         await logStaffShiftEntry(shift.app_log_id);
       } else {
-        await logStaffShiftExit({ app_log_id: shift.app_log_id, reason: "Authorized Break" });
+        await logStaffShiftExit({
+          app_log_id: shift.app_log_id,
+          reason: "Gate Pass",
+        });
       }
       onDismiss();
     } catch (err) {
@@ -146,7 +156,7 @@ export default function StaffShiftDetailsModal({
           {shift.exits.length > 0 && (
             <View style={styles.exitsWrapper}>
               <Text variant="titleMedium" style={styles.sectionTitle}>
-                Authorized Breaks ({shift.exits.length})
+                Gate Passes ({shift.exits.length})
               </Text>
 
               {shift.exits.map((exit, idx) => (
@@ -207,19 +217,26 @@ export default function StaffShiftDetailsModal({
               mode="contained"
               style={[
                 styles.actionBtn,
-                { backgroundColor: isCurrentlyOut ? Colors.light.tint : Colors.light.error },
+                {
+                  backgroundColor: isCurrentlyOut
+                    ? Colors.light.tint
+                    : Colors.light.error,
+                },
               ]}
               onPress={handleExit}
               loading={loading}
               disabled={loading}
             >
-              {isCurrentlyOut ? "Return from Exit" : "Authorized Exit"}
+              {isCurrentlyOut ? "Return from Exit" : "Gate Pass"}
             </ThemedButton>
 
             {!isCurrentlyOut && (
               <ThemedButton
                 mode="contained"
-                style={[styles.actionBtn, { backgroundColor: Colors.light.text }]}
+                style={[
+                  styles.actionBtn,
+                  { backgroundColor: Colors.light.text },
+                ]}
                 onPress={handleClockOut}
                 loading={loading}
                 disabled={loading}
@@ -230,7 +247,11 @@ export default function StaffShiftDetailsModal({
           </View>
         )}
 
-        <ThemedButton onPress={onDismiss} style={styles.closeBtn} disabled={loading}>
+        <ThemedButton
+          onPress={onDismiss}
+          style={styles.closeBtn}
+          disabled={loading}
+        >
           Close
         </ThemedButton>
       </Modal>
