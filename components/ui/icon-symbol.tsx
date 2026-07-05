@@ -25,6 +25,7 @@ const MAPPING = {
   "chevron.left": "chevron-left",
   "car.fill": "directions-car-filled",
   "local-activity": "local-activity",
+  "phone.fill": "phone-android",
 } as IconMapping;
 
 /**

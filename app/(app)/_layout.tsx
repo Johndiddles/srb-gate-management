@@ -22,6 +22,7 @@ export default function AppLayout() {
         <Stack.Screen name="vehicles" />
         <Stack.Screen name="staff-parking" />
         <Stack.Screen name="staff-movement" />
+        <Stack.Screen name="phone-booth" />
       </Stack>
       {deviceName && location && (
         <View

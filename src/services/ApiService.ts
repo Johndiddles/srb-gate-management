@@ -1,5 +1,5 @@
 import { useGateStore } from "../store/useGateStore";
-import { Guest } from "../types";
+import type { Guest, PhoneBoothAssignment } from "../types";
 
 export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
@@ -129,6 +129,27 @@ export const updateGuestStatusApi = async (guestId: string, status: string) => {
   return handleResponse(res);
 };
 
+export const fetchPhoneBoothAssignmentsApi = async (
+  filters?: QueryFilters,
+): Promise<PhoneBoothAssignment[]> => {
+  const res = await fetch(
+    `${API_BASE_URL}/phone-booth${buildQueryParams(filters)}`,
+    {
+      headers: getHeaders(),
+    },
+  );
+  return handleResponse(res);
+};
+
+export const syncPhoneBoothAssignmentToApi = async (body: any) => {
+  const res = await fetch(`${API_BASE_URL}/phone-booth`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(body),
+  });
+  return handleResponse(res);
+};
+
 const ApiService = {
   activateDevice,
   fetchGuestsFromApi,
@@ -137,6 +158,8 @@ const ApiService = {
   fetchStaffShiftsApi,
   syncStaffShiftsApi,
   updateGuestStatusApi,
+  fetchPhoneBoothAssignmentsApi,
+  syncPhoneBoothAssignmentToApi,
 };
 
 export default ApiService;

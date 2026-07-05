@@ -75,3 +75,15 @@ export interface StaffShift {
   exits: ShiftActivity[];
   syncStatus: "pending" | "synced" | "failed";
 }
+
+export interface PhoneBoothAssignment {
+  id: string; // app_log_id
+  staffId: string;
+  staffName?: string;
+  department?: string;
+  slotNumber: number;
+  assignedAt: string;
+  retrievedAt?: string;
+  status: "assigned" | "retrieved";
+  syncStatus: "pending" | "synced" | "failed";
+}

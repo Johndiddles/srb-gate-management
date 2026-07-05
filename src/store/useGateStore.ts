@@ -8,6 +8,7 @@ import {
   VehicularMovement,
   StaffParkingMovement,
   StaffShift,
+  PhoneBoothAssignment,
 } from "../types";
 import { zustandStorage } from "../utils/storage";
 
@@ -25,6 +26,7 @@ interface GateState {
   vehicularMovements: VehicularMovement[];
   staffParkingMovements: StaffParkingMovement[];
   staffShifts: StaffShift[];
+  phoneBoothAssignments: PhoneBoothAssignment[];
   searchQuery: string;
 
   // Actions
@@ -84,6 +86,13 @@ interface GateState {
     reason?: string;
   }) => Promise<void>;
   logStaffShiftEntry: (app_log_id: string) => Promise<void>;
+  logPhoneDeposit: (input: {
+    staffId: string;
+    staffName?: string;
+    department?: string;
+    slotNumber: number;
+  }) => Promise<void>;
+  logPhoneRetrieval: (staffId: string) => Promise<void>;
   setSearchQuery: (query: string) => void;
   syncPendingLogs: () => Promise<void>;
   initialSyncMovements: (
@@ -105,6 +114,7 @@ export const useGateStore = create<GateState>()(
       vehicularMovements: [],
       staffParkingMovements: [],
       staffShifts: [],
+      phoneBoothAssignments: [],
       searchQuery: "",
       isLoading: false,
       error: null,
@@ -413,6 +423,41 @@ export const useGateStore = create<GateState>()(
         get().syncPendingLogs().catch(console.error);
       },
 
+      logPhoneDeposit: async (input) => {
+        set((state) => {
+          const newAssignment: PhoneBoothAssignment = {
+            id: Date.now().toString(),
+            staffId: input.staffId,
+            staffName: input.staffName,
+            department: input.department,
+            slotNumber: input.slotNumber,
+            assignedAt: new Date().toISOString(),
+            status: "assigned",
+            syncStatus: "pending",
+          };
+          return {
+            phoneBoothAssignments: [newAssignment, ...state.phoneBoothAssignments],
+          };
+        });
+        get().syncPendingLogs().catch(console.error);
+      },
+
+      logPhoneRetrieval: async (staffId) => {
+        set((state) => ({
+          phoneBoothAssignments: state.phoneBoothAssignments.map((a) =>
+            a.staffId === staffId && a.status === "assigned"
+              ? {
+                  ...a,
+                  status: "retrieved",
+                  retrievedAt: new Date().toISOString(),
+                  syncStatus: "pending",
+                }
+              : a
+          ),
+        }));
+        get().syncPendingLogs().catch(console.error);
+      },
+
       initialSyncMovements: async (filters) => {
         try {
           await get().syncPendingLogs();
@@ -428,6 +473,13 @@ export const useGateStore = create<GateState>()(
               syncStatus: "synced",
             }),
           );
+
+          let remotePhoneBooth: PhoneBoothAssignment[] = [];
+          try {
+            remotePhoneBooth = await ApiService.fetchPhoneBoothAssignmentsApi(filters);
+          } catch (e) {
+            console.error("Failed to load historical phone booth logs:", e);
+          }
 
           const remoteLogs: ActivityLog[] = [];
           const remoteVehicles: VehicularMovement[] = [];
@@ -528,11 +580,35 @@ export const useGateStore = create<GateState>()(
               ),
             ];
 
+            const pendingPhoneBooth = state.phoneBoothAssignments.filter(
+              (a) => a.syncStatus === "pending",
+            );
+            const pendingPhoneBoothIds = new Set(
+              pendingPhoneBooth.map((a) => a.id),
+            );
+            const finalPhoneBooth = [
+              ...pendingPhoneBooth,
+              ...remotePhoneBooth
+                .map((a: any) => ({
+                  id: a.app_log_id,
+                  staffId: a.staffId,
+                  staffName: a.staffName,
+                  department: a.department,
+                  slotNumber: a.slotNumber,
+                  assignedAt: a.assignedAt,
+                  retrievedAt: a.retrievedAt,
+                  status: a.status,
+                  syncStatus: "synced" as const,
+                }))
+                .filter((a) => !pendingPhoneBoothIds.has(a.id)),
+            ];
+
             return {
               logs: finalLogs,
               vehicularMovements: finalVehicles,
               staffParkingMovements: finalStaffParking,
               staffShifts: finalShifts,
+              phoneBoothAssignments: finalPhoneBooth,
             };
           });
         } catch (e) {
@@ -651,6 +727,37 @@ export const useGateStore = create<GateState>()(
                 console.error(
                   "Failed to sync staff parking movement:",
                   sp.id,
+                  e,
+                );
+              }
+            }
+          }
+
+          // Sync pending phone booth assignments
+          for (const assignment of get().phoneBoothAssignments) {
+            if (assignment.syncStatus === "pending") {
+              try {
+                const { syncPhoneBoothAssignmentToApi } = await import("../services/ApiService");
+                await syncPhoneBoothAssignmentToApi({
+                  staffId: assignment.staffId,
+                  staffName: assignment.staffName,
+                  department: assignment.department,
+                  slotNumber: assignment.slotNumber,
+                  assignedAt: assignment.assignedAt,
+                  retrievedAt: assignment.retrievedAt,
+                  status: assignment.status,
+                  app_log_id: assignment.id,
+                });
+
+                set((state) => ({
+                  phoneBoothAssignments: state.phoneBoothAssignments.map((a) =>
+                    a.id === assignment.id ? { ...a, syncStatus: "synced" } : a,
+                  ),
+                }));
+              } catch (e) {
+                console.error(
+                  "Failed to sync phone booth assignment:",
+                  assignment.id,
                   e,
                 );
               }
