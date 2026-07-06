@@ -150,6 +150,27 @@ export const syncPhoneBoothAssignmentToApi = async (body: any) => {
   return handleResponse(res);
 };
 
+export const fetchKeyCollectionsApi = async (
+  filters?: QueryFilters,
+): Promise<any[]> => {
+  const res = await fetch(
+    `${API_BASE_URL}/keys${buildQueryParams(filters)}`,
+    {
+      headers: getHeaders(),
+    },
+  );
+  return handleResponse(res);
+};
+
+export const syncKeyCollectionToApi = async (body: any) => {
+  const res = await fetch(`${API_BASE_URL}/keys`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(body),
+  });
+  return handleResponse(res);
+};
+
 const ApiService = {
   activateDevice,
   fetchGuestsFromApi,
@@ -160,6 +181,8 @@ const ApiService = {
   updateGuestStatusApi,
   fetchPhoneBoothAssignmentsApi,
   syncPhoneBoothAssignmentToApi,
+  fetchKeyCollectionsApi,
+  syncKeyCollectionToApi,
 };
 
 export default ApiService;

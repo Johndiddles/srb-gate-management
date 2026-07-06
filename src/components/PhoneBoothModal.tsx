@@ -15,8 +15,13 @@ interface Props {
   initialStaffId?: string;
 }
 
-export default function PhoneBoothModal({ visible, onDismiss, initialStaffId }: Props) {
-  const { logPhoneDeposit, logPhoneRetrieval, phoneBoothAssignments } = useGateStore();
+export default function PhoneBoothModal({
+  visible,
+  onDismiss,
+  initialStaffId,
+}: Props) {
+  const { logPhoneDeposit, logPhoneRetrieval, phoneBoothAssignments } =
+    useGateStore();
 
   const [mode, setMode] = useState<"scan" | "manual">("scan");
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -27,9 +32,10 @@ export default function PhoneBoothModal({ visible, onDismiss, initialStaffId }: 
   const [staffName, setStaffName] = useState("");
   const [department, setDepartment] = useState("");
   const [slotNumber, setSlotNumber] = useState("");
-  
+
   // Track active assignment if staff member has a phone in the booth
-  const [activeAssignment, setActiveAssignment] = useState<PhoneBoothAssignment | null>(null);
+  const [activeAssignment, setActiveAssignment] =
+    useState<PhoneBoothAssignment | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -65,7 +71,9 @@ export default function PhoneBoothModal({ visible, onDismiss, initialStaffId }: 
     }
 
     const match = phoneBoothAssignments.find(
-      (a) => a.staffId.trim().toLowerCase() === staffId.trim().toLowerCase() && a.status === "assigned"
+      (a) =>
+        a.staffId.trim().toLowerCase() === staffId.trim().toLowerCase() &&
+        a.status === "assigned",
     );
 
     if (match) {
@@ -75,7 +83,7 @@ export default function PhoneBoothModal({ visible, onDismiss, initialStaffId }: 
       setSlotNumber(match.slotNumber.toString());
     } else {
       setActiveAssignment(null);
-      
+
       // Auto-assign first free slot for deposit, only if not already filled or if it matches previous matching
       const firstFree = findFirstFreeSlot(phoneBoothAssignments);
       if (firstFree !== null) {
@@ -88,7 +96,7 @@ export default function PhoneBoothModal({ visible, onDismiss, initialStaffId }: 
 
   const findFirstFreeSlot = (list: PhoneBoothAssignment[]): number | null => {
     const occupied = new Set(
-      list.filter((a) => a.status === "assigned").map((a) => a.slotNumber)
+      list.filter((a) => a.status === "assigned").map((a) => a.slotNumber),
     );
     for (let slot = 41; slot <= 294; slot++) {
       if (!occupied.has(slot)) {
@@ -114,12 +122,14 @@ export default function PhoneBoothModal({ visible, onDismiss, initialStaffId }: 
       const payload = JSON.parse(data);
       if (payload.staffId) {
         scannedStaffId = payload.staffId;
-        scannedName = `${payload.firstName || ""} ${payload.lastName || ""}`.trim();
+        scannedName =
+          `${payload.firstName || ""} ${payload.lastName || ""}`.trim();
         scannedDept = payload.department || "";
       } else {
         throw new Error("Invalid Staff QR Code");
       }
     } catch (_e) {
+      console.log(_e);
       if (data && (data.startsWith("ST") || data.length > 3)) {
         scannedStaffId = data;
       }
@@ -134,7 +144,7 @@ export default function PhoneBoothModal({ visible, onDismiss, initialStaffId }: 
       Alert.alert(
         "Invalid Barcode",
         "This barcode does not contain a valid Staff ID. Please try again.",
-        [{ text: "OK", onPress: () => setScanned(false) }]
+        [{ text: "OK", onPress: () => setScanned(false) }],
       );
     }
   };
@@ -155,7 +165,7 @@ export default function PhoneBoothModal({ visible, onDismiss, initialStaffId }: 
       logPhoneRetrieval(cleanStaffId);
       Alert.alert(
         "Phone Retrieved",
-        `Phone successfully retrieved from Slot ${activeAssignment.slotNumber} for ${cleanStaffName || cleanStaffId}.`
+        `Phone successfully retrieved from Slot ${activeAssignment.slotNumber} for ${cleanStaffName || cleanStaffId}.`,
       );
       onDismiss();
       return;
@@ -163,19 +173,22 @@ export default function PhoneBoothModal({ visible, onDismiss, initialStaffId }: 
 
     // Deposit Flow
     if (isNaN(slotVal) || slotVal < 41 || slotVal > 294) {
-      Alert.alert("Invalid Slot", "Available slot numbers range from 41 to 294.");
+      Alert.alert(
+        "Invalid Slot",
+        "Available slot numbers range from 41 to 294.",
+      );
       return;
     }
 
     // Verify slot occupancy
     const isOccupied = phoneBoothAssignments.some(
-      (a) => a.status === "assigned" && a.slotNumber === slotVal
+      (a) => a.status === "assigned" && a.slotNumber === slotVal,
     );
 
     if (isOccupied) {
       Alert.alert(
         "Slot Occupied",
-        `Slot ${slotVal} is currently occupied. Please choose a free slot.`
+        `Slot ${slotVal} is currently occupied. Please choose a free slot.`,
       );
       return;
     }
@@ -247,17 +260,35 @@ export default function PhoneBoothModal({ visible, onDismiss, initialStaffId }: 
           </View>
         ) : (
           <View style={styles.formContainer}>
-            <Text
-              variant="bodyMedium"
-              style={[
-                styles.subtitle,
-                activeAssignment ? { color: "#059669", fontWeight: "bold" } : {}
-              ]}
-            >
-              {activeAssignment
-                ? `🟢 Staff phone found stored in Slot ${activeAssignment.slotNumber}.`
-                : "Record phone submission into slot booth."}
-            </Text>
+            {activeAssignment ? (
+              <View
+                style={{
+                  alignItems: "center",
+                  marginBottom: 16,
+                }}
+              >
+                <Text
+                  variant="headlineLarge"
+                  style={[
+                    {
+                      color: "#ffffff",
+                      fontWeight: "bold",
+                      backgroundColor: "#059669",
+                      paddingVertical: 12,
+                      paddingHorizontal: 18,
+                      borderRadius: 12,
+                      textAlign: "center",
+                    },
+                  ]}
+                >
+                  {activeAssignment.slotNumber}
+                </Text>
+              </View>
+            ) : (
+              <Text variant="bodyMedium" style={[styles.subtitle]}>
+                Record phone submission into slot booth
+              </Text>
+            )}
 
             <View style={styles.form}>
               <ThemedTextInput
@@ -279,7 +310,9 @@ export default function PhoneBoothModal({ visible, onDismiss, initialStaffId }: 
               )}
 
               <ThemedTextInput
-                label={activeAssignment ? "Staff Name" : "Staff Name (Optional)"}
+                label={
+                  activeAssignment ? "Staff Name" : "Staff Name (Optional)"
+                }
                 value={staffName}
                 onChangeText={setStaffName}
                 style={styles.input}
@@ -287,21 +320,25 @@ export default function PhoneBoothModal({ visible, onDismiss, initialStaffId }: 
               />
 
               <ThemedTextInput
-                label={activeAssignment ? "Department" : "Department (Optional)"}
+                label={
+                  activeAssignment ? "Department" : "Department (Optional)"
+                }
                 value={department}
                 onChangeText={setDepartment}
                 style={styles.input}
                 disabled={!!activeAssignment}
               />
 
-              <ThemedTextInput
-                label="Assigned Booth Slot (41-294) *"
-                value={slotNumber}
-                onChangeText={setSlotNumber}
-                keyboardType="number-pad"
-                style={styles.input}
-                disabled={!!activeAssignment}
-              />
+              {!activeAssignment && (
+                <ThemedTextInput
+                  label="Assigned Booth Slot (41-294) *"
+                  value={slotNumber}
+                  onChangeText={setSlotNumber}
+                  keyboardType="number-pad"
+                  style={styles.input}
+                  disabled={!!activeAssignment}
+                />
+              )}
             </View>
 
             <View style={styles.actions}>
@@ -340,7 +377,7 @@ function CashlessAutocompleteField({
 
     // Search staff parking or shifts logs for staffId matching
     const matchingParking = staffParkingMovements.find(
-      (m) => m.staffId.toLowerCase() === staffId.trim().toLowerCase()
+      (m) => m.staffId.toLowerCase() === staffId.trim().toLowerCase(),
     );
     if (matchingParking) {
       onChangeDetails(matchingParking.staffName, matchingParking.department);
@@ -348,12 +385,12 @@ function CashlessAutocompleteField({
     }
 
     const matchingShift = staffShifts.find(
-      (s) => s.staffId.toLowerCase() === staffId.trim().toLowerCase()
+      (s) => s.staffId.toLowerCase() === staffId.trim().toLowerCase(),
     );
     if (matchingShift) {
       onChangeDetails(matchingShift.staffName, matchingShift.department);
     }
-  }, [staffId]);
+  }, [staffId, staffShifts, staffParkingMovements, onChangeDetails]);
 
   return null;
 }

@@ -9,6 +9,7 @@ import {
   StaffParkingMovement,
   StaffShift,
   PhoneBoothAssignment,
+  KeyCollection,
 } from "../types";
 import { zustandStorage } from "../utils/storage";
 
@@ -27,6 +28,7 @@ interface GateState {
   staffParkingMovements: StaffParkingMovement[];
   staffShifts: StaffShift[];
   phoneBoothAssignments: PhoneBoothAssignment[];
+  keyCollections: KeyCollection[];
   searchQuery: string;
 
   // Actions
@@ -93,6 +95,18 @@ interface GateState {
     slotNumber: number;
   }) => Promise<void>;
   logPhoneRetrieval: (staffId: string) => Promise<void>;
+  logKeyCollection: (input: {
+    keyTag: string;
+    staffId: string;
+    staffName?: string;
+    department?: string;
+  }) => Promise<void>;
+  logKeyReturn: (input: {
+    keyTag: string;
+    staffId: string;
+    staffName?: string;
+    department?: string;
+  }) => Promise<void>;
   setSearchQuery: (query: string) => void;
   syncPendingLogs: () => Promise<void>;
   initialSyncMovements: (
@@ -115,6 +129,7 @@ export const useGateStore = create<GateState>()(
       staffParkingMovements: [],
       staffShifts: [],
       phoneBoothAssignments: [],
+      keyCollections: [],
       searchQuery: "",
       isLoading: false,
       error: null,
@@ -142,6 +157,7 @@ export const useGateStore = create<GateState>()(
           vehicularMovements: [],
           staffParkingMovements: [],
           staffShifts: [],
+          keyCollections: [],
         }),
 
       setGuests: (guests) => set({ guests }),
@@ -458,6 +474,44 @@ export const useGateStore = create<GateState>()(
         get().syncPendingLogs().catch(console.error);
       },
 
+      logKeyCollection: async (input) => {
+        set((state) => {
+          const newCollection: KeyCollection = {
+            id: Date.now().toString(),
+            keyTag: input.keyTag,
+            collectingStaffId: input.staffId,
+            collectingStaffName: input.staffName,
+            collectingStaffDepartment: input.department,
+            collectedAt: new Date().toISOString(),
+            status: "collected",
+            syncStatus: "pending",
+          };
+          return {
+            keyCollections: [newCollection, ...state.keyCollections],
+          };
+        });
+        get().syncPendingLogs().catch(console.error);
+      },
+
+      logKeyReturn: async (input) => {
+        set((state) => ({
+          keyCollections: state.keyCollections.map((k) =>
+            k.keyTag === input.keyTag && k.status === "collected"
+              ? {
+                  ...k,
+                  status: "returned",
+                  returningStaffId: input.staffId,
+                  returningStaffName: input.staffName,
+                  returningStaffDepartment: input.department,
+                  returnedAt: new Date().toISOString(),
+                  syncStatus: "pending",
+                }
+              : k
+          ),
+        }));
+        get().syncPendingLogs().catch(console.error);
+      },
+
       initialSyncMovements: async (filters) => {
         try {
           await get().syncPendingLogs();
@@ -479,6 +533,13 @@ export const useGateStore = create<GateState>()(
             remotePhoneBooth = await ApiService.fetchPhoneBoothAssignmentsApi(filters);
           } catch (e) {
             console.error("Failed to load historical phone booth logs:", e);
+          }
+
+          let remoteKeyCollections: KeyCollection[] = [];
+          try {
+            remoteKeyCollections = await ApiService.fetchKeyCollectionsApi(filters);
+          } catch (e) {
+            console.error("Failed to load historical key collections:", e);
           }
 
           const remoteLogs: ActivityLog[] = [];
@@ -603,12 +664,41 @@ export const useGateStore = create<GateState>()(
                 .filter((a) => !pendingPhoneBoothIds.has(a.id)),
             ];
 
+            const pendingKeyCollections = state.keyCollections.filter(
+              (k) => k.syncStatus === "pending",
+            );
+            const pendingKeyCollectionIds = new Set(
+              pendingKeyCollections.map((k) => k.id)
+            );
+            const finalKeyCollections = [
+              ...pendingKeyCollections,
+              ...remoteKeyCollections
+                .map((k: any) => ({
+                  id: k.app_log_id,
+                  keyTag: k.keyTag,
+                  collectingStaffId: k.collectingStaffId,
+                  collectingStaffName: k.collectingStaffName,
+                  collectingStaffDepartment: k.collectingStaffDepartment,
+                  collectedAt: k.collectedAt,
+                  returningStaffId: k.returningStaffId,
+                  returningStaffName: k.returningStaffName,
+                  returningStaffDepartment: k.returningStaffDepartment,
+                  returnedAt: k.returnedAt,
+                  status: k.status,
+                  resolvedBy: k.resolvedBy,
+                  resolvedAt: k.resolvedAt,
+                  syncStatus: "synced" as const,
+                }))
+                .filter((k) => !pendingKeyCollectionIds.has(k.id)),
+            ];
+
             return {
               logs: finalLogs,
               vehicularMovements: finalVehicles,
               staffParkingMovements: finalStaffParking,
               staffShifts: finalShifts,
               phoneBoothAssignments: finalPhoneBooth,
+              keyCollections: finalKeyCollections,
             };
           });
         } catch (e) {
@@ -758,6 +848,40 @@ export const useGateStore = create<GateState>()(
                 console.error(
                   "Failed to sync phone booth assignment:",
                   assignment.id,
+                  e,
+                );
+              }
+            }
+          }
+
+          // Sync pending key collections
+          for (const keyLog of get().keyCollections) {
+            if (keyLog.syncStatus === "pending") {
+              try {
+                const { syncKeyCollectionToApi } = await import("../services/ApiService");
+                await syncKeyCollectionToApi({
+                  keyTag: keyLog.keyTag,
+                  collectingStaffId: keyLog.collectingStaffId,
+                  collectingStaffName: keyLog.collectingStaffName,
+                  collectingStaffDepartment: keyLog.collectingStaffDepartment,
+                  collectedAt: keyLog.collectedAt,
+                  returningStaffId: keyLog.returningStaffId,
+                  returningStaffName: keyLog.returningStaffName,
+                  returningStaffDepartment: keyLog.returningStaffDepartment,
+                  returnedAt: keyLog.returnedAt,
+                  status: keyLog.status,
+                  app_log_id: keyLog.id,
+                });
+
+                set((state) => ({
+                  keyCollections: state.keyCollections.map((k) =>
+                    k.id === keyLog.id ? { ...k, syncStatus: "synced" } : k,
+                  ),
+                }));
+              } catch (e) {
+                console.error(
+                  "Failed to sync key collection:",
+                  keyLog.id,
                   e,
                 );
               }

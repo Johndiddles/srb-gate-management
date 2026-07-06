@@ -87,3 +87,20 @@ export interface PhoneBoothAssignment {
   status: "assigned" | "retrieved";
   syncStatus: "pending" | "synced" | "failed";
 }
+
+export interface KeyCollection {
+  id: string; // app_log_id
+  keyTag: string;
+  collectingStaffId: string;
+  collectingStaffName?: string;
+  collectingStaffDepartment?: string;
+  collectedAt: string;
+  returningStaffId?: string;
+  returningStaffName?: string;
+  returningStaffDepartment?: string;
+  returnedAt?: string;
+  status: "collected" | "returned" | "resolved";
+  resolvedBy?: string;
+  resolvedAt?: string;
+  syncStatus: "pending" | "synced" | "failed";
+}

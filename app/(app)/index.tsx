@@ -40,6 +40,8 @@ export default function DashboardHub() {
     permissions.includes("log_staff_movement") || permissions.length === 0;
   const canAccessPhoneBooth =
     permissions.includes("phone_booth") || permissions.length === 0;
+  const canAccessKeys =
+    permissions.includes("keys") || permissions.length === 0;
 
   // const handleDeactivate = () => {
   //   // Actually handle device deactivation
@@ -169,6 +171,23 @@ export default function DashboardHub() {
               </View>
               <Text variant="titleMedium" style={styles.cardTitle}>
                 Phone Booth
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {canAccessKeys && (
+            <TouchableOpacity
+              style={styles.card}
+              activeOpacity={0.7}
+              onPress={() => router.push("/(app)/keys" as any)}
+            >
+              <View
+                style={[styles.iconContainer, { backgroundColor: "#05966920" }]}
+              >
+                <IconSymbol size={32} name="key.fill" color="#059669" />
+              </View>
+              <Text variant="titleMedium" style={styles.cardTitle}>
+                Keys Tracking
               </Text>
             </TouchableOpacity>
           )}
