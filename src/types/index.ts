@@ -75,3 +75,32 @@ export interface StaffShift {
   exits: ShiftActivity[];
   syncStatus: "pending" | "synced" | "failed";
 }
+
+export interface PhoneBoothAssignment {
+  id: string; // app_log_id
+  staffId: string;
+  staffName?: string;
+  department?: string;
+  slotNumber: number;
+  assignedAt: string;
+  retrievedAt?: string;
+  status: "assigned" | "retrieved";
+  syncStatus: "pending" | "synced" | "failed";
+}
+
+export interface KeyCollection {
+  id: string; // app_log_id
+  keyTag: string;
+  collectingStaffId: string;
+  collectingStaffName?: string;
+  collectingStaffDepartment?: string;
+  collectedAt: string;
+  returningStaffId?: string;
+  returningStaffName?: string;
+  returningStaffDepartment?: string;
+  returnedAt?: string;
+  status: "collected" | "returned" | "resolved";
+  resolvedBy?: string;
+  resolvedAt?: string;
+  syncStatus: "pending" | "synced" | "failed";
+}

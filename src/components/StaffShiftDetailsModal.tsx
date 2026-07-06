@@ -1,11 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, View, ScrollView } from "react-native";
-import { Modal, Portal, Surface, Divider } from "react-native-paper";
+import {
+  Modal,
+  Portal,
+  Surface,
+  Divider,
+  IconButton,
+} from "react-native-paper";
 import Text from "./ThemedText";
 import { Colors } from "../../constants/theme";
 import ThemedButton from "./ThemedButton";
 import { StaffShift } from "../types";
 import { isTabletByDimensions } from "../utils/dimensions";
+import { useGateStore } from "../store/useGateStore";
 
 export default function StaffShiftDetailsModal({
   visible,
@@ -16,6 +23,10 @@ export default function StaffShiftDetailsModal({
   onDismiss: () => void;
   shift: StaffShift | null;
 }) {
+  const { logStaffShiftOut, logStaffShiftExit, logStaffShiftEntry } =
+    useGateStore();
+  const [loading, setLoading] = useState(false);
+
   if (!shift) return null;
 
   const isCurrentlyOut = shift.exits.some((e) => !e.timeIn);
@@ -25,6 +36,39 @@ export default function StaffShiftDetailsModal({
       : isCurrentlyOut
         ? "On Break / Errand"
         : "On Duty";
+
+  const handleClockOut = async () => {
+    if (!shift || loading) return;
+    setLoading(true);
+    try {
+      await logStaffShiftOut(shift.app_log_id);
+      onDismiss();
+    } catch (err) {
+      console.error("Failed to clock out:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExit = async () => {
+    if (!shift || loading) return;
+    setLoading(true);
+    try {
+      if (isCurrentlyOut) {
+        await logStaffShiftEntry(shift.app_log_id);
+      } else {
+        await logStaffShiftExit({
+          app_log_id: shift.app_log_id,
+          reason: "Gate Pass",
+        });
+      }
+      onDismiss();
+    } catch (err) {
+      console.error("Failed to log exit:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Portal>
@@ -36,6 +80,12 @@ export default function StaffShiftDetailsModal({
         <Text variant="titleLarge" style={styles.title}>
           Shift Timeline
         </Text>
+        <IconButton
+          icon="close"
+          size={24}
+          onPress={onDismiss}
+          style={styles.closeIcon}
+        />
 
         <ScrollView style={styles.scroll}>
           <Surface style={styles.headerCard} elevation={0}>
@@ -106,7 +156,7 @@ export default function StaffShiftDetailsModal({
           {shift.exits.length > 0 && (
             <View style={styles.exitsWrapper}>
               <Text variant="titleMedium" style={styles.sectionTitle}>
-                Authorized Breaks ({shift.exits.length})
+                Gate Passes ({shift.exits.length})
               </Text>
 
               {shift.exits.map((exit, idx) => (
@@ -161,7 +211,47 @@ export default function StaffShiftDetailsModal({
           )}
         </ScrollView>
 
-        <ThemedButton onPress={onDismiss} style={styles.closeBtn}>
+        {shift.status !== "completed" && (
+          <View style={styles.actionButtons}>
+            <ThemedButton
+              mode="contained"
+              style={[
+                styles.actionBtn,
+                {
+                  backgroundColor: isCurrentlyOut
+                    ? Colors.light.tint
+                    : Colors.light.error,
+                },
+              ]}
+              onPress={handleExit}
+              loading={loading}
+              disabled={loading}
+            >
+              {isCurrentlyOut ? "Return from Exit" : "Gate Pass"}
+            </ThemedButton>
+
+            {!isCurrentlyOut && (
+              <ThemedButton
+                mode="contained"
+                style={[
+                  styles.actionBtn,
+                  { backgroundColor: Colors.light.text },
+                ]}
+                onPress={handleClockOut}
+                loading={loading}
+                disabled={loading}
+              >
+                Clock Out
+              </ThemedButton>
+            )}
+          </View>
+        )}
+
+        <ThemedButton
+          onPress={onDismiss}
+          style={styles.closeBtn}
+          disabled={loading}
+        >
           Close
         </ThemedButton>
       </Modal>
@@ -264,8 +354,22 @@ const styles = StyleSheet.create({
   timeRow: {
     color: Colors.light.text,
   },
+  actionButtons: {
+    paddingHorizontal: 20,
+    marginBottom: 8,
+    gap: 12,
+  },
+  actionBtn: {
+    borderRadius: 8,
+  },
   closeBtn: {
     margin: 20,
-    marginTop: 0,
+    marginTop: 8,
+  },
+  closeIcon: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    zIndex: 10,
   },
 });

@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import React, { useState, useEffect } from "react";
-import { FlatList, StyleSheet, View, RefreshControl } from "react-native";
+import { FlatList, StyleSheet, View, RefreshControl, TouchableOpacity } from "react-native";
 import { SegmentedButtons, Surface, TouchableRipple } from "react-native-paper";
 import Text from "../../src/components/ThemedText";
 import ThemedButton from "../../src/components/ThemedButton";
@@ -9,6 +9,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import MovementLogModal from "../../src/components/MovementLogModal";
 // import { pickAndParseFile } from "../../src/services/FileImporter";
 import { useGateStore } from "../../src/store/useGateStore";
+import { IconSymbol } from "../../components/ui/icon-symbol";
 import { Guest } from "../../src/types";
 import { Colors } from "../../constants/theme";
 
@@ -53,26 +54,9 @@ export default function IndexPage() {
 
     const canAccessGuests =
       permissions.includes("view_guest_list") || permissions.length === 0;
-    const canAccessActivities =
-      permissions.includes("log_guest_movement") || permissions.length === 0;
-    const canAccessVehicles =
-      permissions.includes("log_vehicular_movement") ||
-      permissions.length === 0;
-    const canAccessStaffParking =
-      permissions.includes("log_staff_parking") || permissions.length === 0;
-    const canAccessStaffMovement =
-      permissions.includes("log_staff_movement") || permissions.length === 0;
 
     if (!canAccessGuests) {
-      if (canAccessActivities) {
-        router.replace("/activities" as any);
-      } else if (canAccessVehicles) {
-        router.replace("/vehicles" as any);
-      } else if (canAccessStaffParking) {
-        router.replace("/staff-parking" as any);
-      } else if (canAccessStaffMovement) {
-        router.replace("/staff-movement" as any);
-      }
+      router.replace("/(app)/" as any);
       return;
     }
 
@@ -262,7 +246,12 @@ export default function IndexPage() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={{ fontSize: 32, fontWeight: "bold", color: Colors.light.text }}>Gate Guard</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+          <TouchableOpacity onPress={() => router.back()} style={{ padding: 4, marginRight: 8 }}>
+            <IconSymbol name="chevron.left" size={32} color={Colors.light.text} />
+          </TouchableOpacity>
+          <Text style={{ fontSize: 32, fontWeight: "bold", color: Colors.light.text }}>Gate Guard</Text>
+        </View>
         <View style={{ flexDirection: "row", gap: 8 }}>
           <ThemedButton
             icon="cloud-download"

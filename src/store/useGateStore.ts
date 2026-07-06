@@ -8,6 +8,8 @@ import {
   VehicularMovement,
   StaffParkingMovement,
   StaffShift,
+  PhoneBoothAssignment,
+  KeyCollection,
 } from "../types";
 import { zustandStorage } from "../utils/storage";
 
@@ -18,12 +20,15 @@ interface GateState {
   deviceName: string | null;
   deviceToken: string | null;
   licenseKey: string | null;
+  location: string | null;
   permissions: string[];
   guests: Guest[];
   logs: ActivityLog[];
   vehicularMovements: VehicularMovement[];
   staffParkingMovements: StaffParkingMovement[];
   staffShifts: StaffShift[];
+  phoneBoothAssignments: PhoneBoothAssignment[];
+  keyCollections: KeyCollection[];
   searchQuery: string;
 
   // Actions
@@ -32,11 +37,14 @@ interface GateState {
     deviceName: string,
     permissions: string[],
     deviceToken: string,
+    location?: string,
   ) => void;
   deactivateProvider: () => void;
   setGuests: (guests: Guest[]) => void;
   importGuests: (newGuests: Guest[]) => void;
-  fetchGuests: (filters?: import("../services/ApiService").QueryFilters) => Promise<void>;
+  fetchGuests: (
+    filters?: import("../services/ApiService").QueryFilters,
+  ) => Promise<void>;
   updateGuestStatus: (guestId: string, status: GuestStatus) => void;
   logMovement: (input: {
     guestId: string;
@@ -75,11 +83,35 @@ interface GateState {
     department: string;
   }) => Promise<void>;
   logStaffShiftOut: (app_log_id: string) => Promise<void>;
-  logStaffShiftExit: (input: { app_log_id: string; reason?: string }) => Promise<void>;
+  logStaffShiftExit: (input: {
+    app_log_id: string;
+    reason?: string;
+  }) => Promise<void>;
   logStaffShiftEntry: (app_log_id: string) => Promise<void>;
+  logPhoneDeposit: (input: {
+    staffId: string;
+    staffName?: string;
+    department?: string;
+    slotNumber: number;
+  }) => Promise<void>;
+  logPhoneRetrieval: (staffId: string) => Promise<void>;
+  logKeyCollection: (input: {
+    keyTag: string;
+    staffId: string;
+    staffName?: string;
+    department?: string;
+  }) => Promise<void>;
+  logKeyReturn: (input: {
+    keyTag: string;
+    staffId: string;
+    staffName?: string;
+    department?: string;
+  }) => Promise<void>;
   setSearchQuery: (query: string) => void;
   syncPendingLogs: () => Promise<void>;
-  initialSyncMovements: (filters?: import("../services/ApiService").QueryFilters) => Promise<void>;
+  initialSyncMovements: (
+    filters?: import("../services/ApiService").QueryFilters,
+  ) => Promise<void>;
 }
 
 export const useGateStore = create<GateState>()(
@@ -89,23 +121,27 @@ export const useGateStore = create<GateState>()(
       deviceName: null,
       deviceToken: null,
       licenseKey: null,
+      location: null,
       permissions: [],
       guests: [],
       logs: [],
       vehicularMovements: [],
       staffParkingMovements: [],
       staffShifts: [],
+      phoneBoothAssignments: [],
+      keyCollections: [],
       searchQuery: "",
       isLoading: false,
       error: null,
 
-      activateProvider: (licenseKey, deviceName, permissions, deviceToken) =>
+      activateProvider: (licenseKey, deviceName, permissions, deviceToken, location) =>
         set({
           isActivated: true,
           licenseKey,
           deviceName,
           permissions,
           deviceToken,
+          location: location || null,
         }),
 
       deactivateProvider: () =>
@@ -114,7 +150,14 @@ export const useGateStore = create<GateState>()(
           licenseKey: null,
           deviceName: null,
           deviceToken: null,
+          location: null,
           permissions: [],
+          guests: [],
+          logs: [],
+          vehicularMovements: [],
+          staffParkingMovements: [],
+          staffShifts: [],
+          keyCollections: [],
         }),
 
       setGuests: (guests) => set({ guests }),
@@ -144,12 +187,19 @@ export const useGateStore = create<GateState>()(
         }
       },
 
-      updateGuestStatus: (guestId, status) =>
+      updateGuestStatus: async (guestId, status) => {
         set((state) => ({
           guests: state.guests.map((g) =>
             g._id === guestId ? { ...g, status } : g,
           ),
-        })),
+        }));
+        try {
+          const ApiService = (await import("../services/ApiService")).default;
+          await ApiService.updateGuestStatusApi(guestId, status);
+        } catch (e) {
+          console.error("Failed to sync guest status to API", e);
+        }
+      },
 
       logMovement: async (logData) => {
         set((state) => {
@@ -291,7 +341,11 @@ export const useGateStore = create<GateState>()(
       logStaffVehicleOut: async (movementData) => {
         set((state) => {
           const logIndex = state.staffParkingMovements.findIndex(
-            (v) => (v.staffId === movementData.staffId || (v.plateNumber && v.plateNumber === movementData.plateNumber)) && !v.timeOut,
+            (v) =>
+              (v.staffId === movementData.staffId ||
+                (v.plateNumber &&
+                  v.plateNumber === movementData.plateNumber)) &&
+              !v.timeOut,
           );
 
           let updatedMovements = [...state.staffParkingMovements];
@@ -337,7 +391,7 @@ export const useGateStore = create<GateState>()(
                   status: "completed",
                   syncStatus: "pending",
                 }
-              : s
+              : s,
           ),
         }));
         get().syncPendingLogs().catch(console.error);
@@ -359,7 +413,7 @@ export const useGateStore = create<GateState>()(
                     },
                   ],
                 }
-              : s
+              : s,
           ),
         }));
         get().syncPendingLogs().catch(console.error);
@@ -385,17 +439,108 @@ export const useGateStore = create<GateState>()(
         get().syncPendingLogs().catch(console.error);
       },
 
+      logPhoneDeposit: async (input) => {
+        set((state) => {
+          const newAssignment: PhoneBoothAssignment = {
+            id: Date.now().toString(),
+            staffId: input.staffId,
+            staffName: input.staffName,
+            department: input.department,
+            slotNumber: input.slotNumber,
+            assignedAt: new Date().toISOString(),
+            status: "assigned",
+            syncStatus: "pending",
+          };
+          return {
+            phoneBoothAssignments: [newAssignment, ...state.phoneBoothAssignments],
+          };
+        });
+        get().syncPendingLogs().catch(console.error);
+      },
+
+      logPhoneRetrieval: async (staffId) => {
+        set((state) => ({
+          phoneBoothAssignments: state.phoneBoothAssignments.map((a) =>
+            a.staffId === staffId && a.status === "assigned"
+              ? {
+                  ...a,
+                  status: "retrieved",
+                  retrievedAt: new Date().toISOString(),
+                  syncStatus: "pending",
+                }
+              : a
+          ),
+        }));
+        get().syncPendingLogs().catch(console.error);
+      },
+
+      logKeyCollection: async (input) => {
+        set((state) => {
+          const newCollection: KeyCollection = {
+            id: Date.now().toString(),
+            keyTag: input.keyTag,
+            collectingStaffId: input.staffId,
+            collectingStaffName: input.staffName,
+            collectingStaffDepartment: input.department,
+            collectedAt: new Date().toISOString(),
+            status: "collected",
+            syncStatus: "pending",
+          };
+          return {
+            keyCollections: [newCollection, ...state.keyCollections],
+          };
+        });
+        get().syncPendingLogs().catch(console.error);
+      },
+
+      logKeyReturn: async (input) => {
+        set((state) => ({
+          keyCollections: state.keyCollections.map((k) =>
+            k.keyTag === input.keyTag && k.status === "collected"
+              ? {
+                  ...k,
+                  status: "returned",
+                  returningStaffId: input.staffId,
+                  returningStaffName: input.staffName,
+                  returningStaffDepartment: input.department,
+                  returnedAt: new Date().toISOString(),
+                  syncStatus: "pending",
+                }
+              : k
+          ),
+        }));
+        get().syncPendingLogs().catch(console.error);
+      },
+
       initialSyncMovements: async (filters) => {
         try {
           await get().syncPendingLogs();
           const ApiService = (await import("../services/ApiService")).default;
-          const remoteMovements = await ApiService.fetchDeviceMovements(filters);
-          
-          const fetchedShiftsRes = await ApiService.fetchStaffShiftsApi(filters);
-          const remoteShifts: StaffShift[] = (fetchedShiftsRes.data || []).map((s: any) => ({
-            ...s,
-            syncStatus: "synced",
-          }));
+          const remoteMovements =
+            await ApiService.fetchDeviceMovements(filters);
+
+          const fetchedShiftsRes =
+            await ApiService.fetchStaffShiftsApi(filters);
+          const remoteShifts: StaffShift[] = (fetchedShiftsRes.data || []).map(
+            (s: any) => ({
+              ...s,
+              syncStatus: "synced",
+            }),
+          );
+
+          let remotePhoneBooth: PhoneBoothAssignment[] = [];
+          try {
+            remotePhoneBooth = await ApiService.fetchPhoneBoothAssignmentsApi(filters);
+          } catch (e) {
+            console.error("Failed to load historical phone booth logs:", e);
+          }
+
+          let remoteKeyCollections: KeyCollection[] = [];
+          try {
+            remoteKeyCollections = await ApiService.fetchKeyCollectionsApi(filters);
+          } catch (e) {
+            console.error("Failed to load historical key collections:", e);
+          }
 
           const remoteLogs: ActivityLog[] = [];
           const remoteVehicles: VehicularMovement[] = [];
@@ -462,7 +607,9 @@ export const useGateStore = create<GateState>()(
 
             const pendingLogIds = new Set(pendingLogs.map((l) => l.id));
             const pendingVehicleIds = new Set(pendingVehicles.map((v) => v.id));
-            const pendingStaffParkingIds = new Set(pendingStaffParking.map((s) => s.id));
+            const pendingStaffParkingIds = new Set(
+              pendingStaffParking.map((s) => s.id),
+            );
 
             const finalLogs = [
               ...pendingLogs,
@@ -476,21 +623,82 @@ export const useGateStore = create<GateState>()(
 
             const finalStaffParking = [
               ...pendingStaffParking,
-              ...remoteStaffParking.filter((s) => !pendingStaffParkingIds.has(s.id)),
+              ...remoteStaffParking.filter(
+                (s) => !pendingStaffParkingIds.has(s.id),
+              ),
             ];
 
-            const pendingShifts = state.staffShifts.filter((s) => s.syncStatus === "pending");
-            const pendingShiftIds = new Set(pendingShifts.map((s) => s.app_log_id));
+            const pendingShifts = state.staffShifts.filter(
+              (s) => s.syncStatus === "pending",
+            );
+            const pendingShiftIds = new Set(
+              pendingShifts.map((s) => s.app_log_id),
+            );
             const finalShifts = [
               ...pendingShifts,
-              ...remoteShifts.filter((rs) => !pendingShiftIds.has(rs.app_log_id)),
+              ...remoteShifts.filter(
+                (rs) => !pendingShiftIds.has(rs.app_log_id),
+              ),
             ];
 
-            return { 
-              logs: finalLogs, 
-              vehicularMovements: finalVehicles, 
+            const pendingPhoneBooth = state.phoneBoothAssignments.filter(
+              (a) => a.syncStatus === "pending",
+            );
+            const pendingPhoneBoothIds = new Set(
+              pendingPhoneBooth.map((a) => a.id),
+            );
+            const finalPhoneBooth = [
+              ...pendingPhoneBooth,
+              ...remotePhoneBooth
+                .map((a: any) => ({
+                  id: a.app_log_id,
+                  staffId: a.staffId,
+                  staffName: a.staffName,
+                  department: a.department,
+                  slotNumber: a.slotNumber,
+                  assignedAt: a.assignedAt,
+                  retrievedAt: a.retrievedAt,
+                  status: a.status,
+                  syncStatus: "synced" as const,
+                }))
+                .filter((a) => !pendingPhoneBoothIds.has(a.id)),
+            ];
+
+            const pendingKeyCollections = state.keyCollections.filter(
+              (k) => k.syncStatus === "pending",
+            );
+            const pendingKeyCollectionIds = new Set(
+              pendingKeyCollections.map((k) => k.id)
+            );
+            const finalKeyCollections = [
+              ...pendingKeyCollections,
+              ...remoteKeyCollections
+                .map((k: any) => ({
+                  id: k.app_log_id,
+                  keyTag: k.keyTag,
+                  collectingStaffId: k.collectingStaffId,
+                  collectingStaffName: k.collectingStaffName,
+                  collectingStaffDepartment: k.collectingStaffDepartment,
+                  collectedAt: k.collectedAt,
+                  returningStaffId: k.returningStaffId,
+                  returningStaffName: k.returningStaffName,
+                  returningStaffDepartment: k.returningStaffDepartment,
+                  returnedAt: k.returnedAt,
+                  status: k.status,
+                  resolvedBy: k.resolvedBy,
+                  resolvedAt: k.resolvedAt,
+                  syncStatus: "synced" as const,
+                }))
+                .filter((k) => !pendingKeyCollectionIds.has(k.id)),
+            ];
+
+            return {
+              logs: finalLogs,
+              vehicularMovements: finalVehicles,
               staffParkingMovements: finalStaffParking,
-              staffShifts: finalShifts 
+              staffShifts: finalShifts,
+              phoneBoothAssignments: finalPhoneBooth,
+              keyCollections: finalKeyCollections,
             };
           });
         } catch (e) {
@@ -501,7 +709,8 @@ export const useGateStore = create<GateState>()(
       syncPendingLogs: async () => {
         const { logs, vehicularMovements, staffShifts } = get();
         try {
-          const { syncMovementToApi, syncStaffShiftsApi } = await import("../services/ApiService");
+          const { syncMovementToApi, syncStaffShiftsApi } =
+            await import("../services/ApiService");
           const successfulGuestLogIds: string[] = [];
           const successfulVehicularLogs: string[] = [];
           const successfulStaffParkingLogs: string[] = [];
@@ -562,16 +771,20 @@ export const useGateStore = create<GateState>()(
             }
           }
 
-          const pendingShiftsList = staffShifts.filter(s => s.syncStatus === "pending");
+          const pendingShiftsList = staffShifts.filter(
+            (s) => s.syncStatus === "pending",
+          );
           if (pendingShiftsList.length > 0) {
             try {
               await syncStaffShiftsApi(
-                pendingShiftsList.map(({ syncStatus, ...rest }) => rest)
+                pendingShiftsList.map(({ syncStatus, ...rest }) => rest),
               );
               set((state) => ({
                 staffShifts: state.staffShifts.map((s) =>
-                  s.syncStatus === "pending" ? { ...s, syncStatus: "synced" } : s
-                )
+                  s.syncStatus === "pending"
+                    ? { ...s, syncStatus: "synced" }
+                    : s,
+                ),
               }));
             } catch (e) {
               console.error("Failed to sync staff shifts", e);
@@ -601,7 +814,76 @@ export const useGateStore = create<GateState>()(
                   ),
                 }));
               } catch (e) {
-                console.error("Failed to sync staff parking movement:", sp.id, e);
+                console.error(
+                  "Failed to sync staff parking movement:",
+                  sp.id,
+                  e,
+                );
+              }
+            }
+          }
+
+          // Sync pending phone booth assignments
+          for (const assignment of get().phoneBoothAssignments) {
+            if (assignment.syncStatus === "pending") {
+              try {
+                const { syncPhoneBoothAssignmentToApi } = await import("../services/ApiService");
+                await syncPhoneBoothAssignmentToApi({
+                  staffId: assignment.staffId,
+                  staffName: assignment.staffName,
+                  department: assignment.department,
+                  slotNumber: assignment.slotNumber,
+                  assignedAt: assignment.assignedAt,
+                  retrievedAt: assignment.retrievedAt,
+                  status: assignment.status,
+                  app_log_id: assignment.id,
+                });
+
+                set((state) => ({
+                  phoneBoothAssignments: state.phoneBoothAssignments.map((a) =>
+                    a.id === assignment.id ? { ...a, syncStatus: "synced" } : a,
+                  ),
+                }));
+              } catch (e) {
+                console.error(
+                  "Failed to sync phone booth assignment:",
+                  assignment.id,
+                  e,
+                );
+              }
+            }
+          }
+
+          // Sync pending key collections
+          for (const keyLog of get().keyCollections) {
+            if (keyLog.syncStatus === "pending") {
+              try {
+                const { syncKeyCollectionToApi } = await import("../services/ApiService");
+                await syncKeyCollectionToApi({
+                  keyTag: keyLog.keyTag,
+                  collectingStaffId: keyLog.collectingStaffId,
+                  collectingStaffName: keyLog.collectingStaffName,
+                  collectingStaffDepartment: keyLog.collectingStaffDepartment,
+                  collectedAt: keyLog.collectedAt,
+                  returningStaffId: keyLog.returningStaffId,
+                  returningStaffName: keyLog.returningStaffName,
+                  returningStaffDepartment: keyLog.returningStaffDepartment,
+                  returnedAt: keyLog.returnedAt,
+                  status: keyLog.status,
+                  app_log_id: keyLog.id,
+                });
+
+                set((state) => ({
+                  keyCollections: state.keyCollections.map((k) =>
+                    k.id === keyLog.id ? { ...k, syncStatus: "synced" } : k,
+                  ),
+                }));
+              } catch (e) {
+                console.error(
+                  "Failed to sync key collection:",
+                  keyLog.id,
+                  e,
+                );
               }
             }
           }

@@ -1,28 +1,28 @@
 import React, { useState } from "react";
-import { FlatList, StyleSheet, View, RefreshControl } from "react-native";
+import { FlatList, StyleSheet, View, RefreshControl, TouchableOpacity } from "react-native";
 import { Surface } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect } from "expo-router";
-
 import ThemedButton from "../../src/components/ThemedButton";
 import ThemedSearchbar from "../../src/components/ThemedSearchbar";
 import Text from "../../src/components/ThemedText";
-import StaffParkingModal from "../../src/components/StaffParkingModal";
-import { StaffParkingMovement } from "../../src/types";
+import { SafeAreaView } from "react-native-safe-area-context";
+import VehicleMovementModal from "../../src/components/VehicleMovementModal";
+import { VehicularMovement } from "../../src/types";
 import { useGateStore } from "../../src/store/useGateStore";
 import { Colors } from "../../constants/theme";
+
+import { useFocusEffect, router } from "expo-router";
+import { IconSymbol } from "../../components/ui/icon-symbol";
 import { isTabletByDimensions } from "@/src/utils/dimensions";
 
 const isTablet = isTabletByDimensions();
 
-export default function StaffParkingFeed() {
+export default function VehiclesFeed() {
   const {
-    staffParkingMovements,
-    logStaffVehicleOut,
+    vehicularMovements,
+    logVehicleOut,
     syncPendingLogs,
     initialSyncMovements,
   } = useGateStore();
-
   const [searchQuery, setSearchQuery] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -45,13 +45,12 @@ export default function StaffParkingFeed() {
     }, [initialSyncMovements]),
   );
 
-  const filteredMovements = staffParkingMovements
+  const filteredMovements = vehicularMovements
     .filter((v) => {
       const query = searchQuery.toLowerCase();
       return (
-        v.staffName.toLowerCase().includes(query) ||
-        v.department.toLowerCase().includes(query) ||
-        (v.plateNumber && v.plateNumber.toLowerCase().includes(query))
+        v.plateNumber.toLowerCase().includes(query) ||
+        v.name.toLowerCase().includes(query)
       );
     })
     .sort((a, b) => {
@@ -59,16 +58,15 @@ export default function StaffParkingFeed() {
       return new Date(b.timeIn).getTime() - new Date(a.timeIn).getTime();
     });
 
-  const handleLogOut = (item: StaffParkingMovement) => {
-    logStaffVehicleOut({
-      staffId: item.staffId,
-      staffName: item.staffName,
-      department: item.department,
+  const handleLogOut = (item: VehicularMovement) => {
+    logVehicleOut({
       plateNumber: item.plateNumber,
+      name: item.name,
+      reason: item.reason,
     });
   };
 
-  const renderItem = ({ item }: { item: StaffParkingMovement }) => {
+  const renderItem = ({ item }: { item: VehicularMovement }) => {
     return (
       <Surface style={styles.card} elevation={1}>
         <View style={styles.cardContent}>
@@ -77,13 +75,13 @@ export default function StaffParkingFeed() {
               variant={isTablet ? "titleLarge" : "titleMedium"}
               style={{ fontWeight: "bold" }}
             >
-              {item.staffName}
+              {item.plateNumber}
             </Text>
             <Text
               variant={isTablet ? "bodyLarge" : "bodyMedium"}
-              style={{ color: Colors.light.text, fontWeight: "600" }}
+              style={{ color: Colors.light.text }}
             >
-              {item.plateNumber || "NO PLATE"}
+              {item.name}
             </Text>
           </View>
 
@@ -91,15 +89,12 @@ export default function StaffParkingFeed() {
             <View>
               <View style={styles.timeRow}>
                 <Text variant={isTablet ? "bodyLarge" : "bodyMedium"}>
-                  Department: {item.department}
+                  Reason: {item.reason}
                 </Text>
               </View>
 
               <View style={[styles.timeRow, { marginTop: 4 }]}>
-                <Text
-                  variant={isTablet ? "bodyLarge" : "bodyMedium"}
-                  style={{ fontWeight: "500" }}
-                >
+                <Text variant={isTablet ? "bodyLarge" : "bodyMedium"}>
                   {item.timeOut ? "⚫ OUT" : "🟢 Inside"}
                 </Text>
               </View>
@@ -145,17 +140,29 @@ export default function StaffParkingFeed() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={{ fontSize: 32, fontWeight: "bold", color: Colors.light.text }}>
-          Staff Parking
-        </Text>
-        <ThemedButton mode="contained" onPress={() => setModalVisible(true)}>
-          Scan
+        <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+          <TouchableOpacity onPress={() => router.back()} style={{ padding: 4, marginRight: 8 }}>
+            <IconSymbol name="chevron.left" size={32} color={Colors.light.text} />
+          </TouchableOpacity>
+          <Text style={{ fontSize: 32, fontWeight: "bold", color: Colors.light.text }}>
+            Vehicles Feed
+          </Text>
+        </View>
+        <ThemedButton
+          mode="contained"
+          // labelStyle={{ color: "white" }}
+          // style={{
+          //   backgroundColor: "#000",
+          // }}
+          onPress={() => setModalVisible(true)}
+        >
+          Log Entry
         </ThemedButton>
       </View>
 
       <View style={styles.searchContainer}>
         <ThemedSearchbar
-          placeholder="Search Name, Dept or Plate..."
+          placeholder="Search License Plate or Name..."
           onChangeText={setSearchQuery}
           value={searchQuery}
           style={styles.searchBar}
@@ -172,12 +179,12 @@ export default function StaffParkingFeed() {
         }
         ListEmptyComponent={
           <Text style={{ textAlign: "center", marginTop: 20, color: Colors.light.icon }}>
-            No staff parking recorded.
+            No vehicles recorded.
           </Text>
         }
       />
 
-      <StaffParkingModal
+      <VehicleMovementModal
         visible={modalVisible}
         onDismiss={() => setModalVisible(false)}
       />

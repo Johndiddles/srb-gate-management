@@ -1,5 +1,5 @@
 import { useGateStore } from "../store/useGateStore";
-import { Guest } from "../types";
+import type { Guest, PhoneBoothAssignment } from "../types";
 
 export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
@@ -60,18 +60,33 @@ export const activateDevice = async (
   return handleResponse(res); // { message, permissions, token }
 };
 
-export const fetchGuestsFromApi = async (filters?: QueryFilters): Promise<Guest[]> => {
-  const res = await fetch(`${API_BASE_URL}/guests${buildQueryParams(filters)}`, {
+export const validateLicensePing = async () => {
+  const res = await fetch(`${API_BASE_URL}/licenses/ping`, {
     headers: getHeaders(),
   });
+  return handleResponse(res);
+};
+
+export const fetchGuestsFromApi = async (
+  filters?: QueryFilters,
+): Promise<Guest[]> => {
+  const res = await fetch(
+    `${API_BASE_URL}/guests${buildQueryParams(filters)}`,
+    {
+      headers: getHeaders(),
+    },
+  );
   const data = await handleResponse(res);
   return data || [];
 };
 
 const fetchDeviceMovements = async (filters?: QueryFilters) => {
-  const res = await fetch(`${API_BASE_URL}/movements${buildQueryParams(filters)}`, {
-    headers: getHeaders(),
-  });
+  const res = await fetch(
+    `${API_BASE_URL}/movements${buildQueryParams(filters)}`,
+    {
+      headers: getHeaders(),
+    },
+  );
   return handleResponse(res);
 };
 
@@ -87,14 +102,68 @@ export const syncMovementToApi = async (body: any) => {
 };
 
 export const fetchStaffShiftsApi = async (filters?: QueryFilters) => {
-  const res = await fetch(`${API_BASE_URL}/movements/staff-shifts${buildQueryParams(filters)}`, {
-    headers: getHeaders(),
-  });
+  const res = await fetch(
+    `${API_BASE_URL}/movements/staff-shifts${buildQueryParams(filters)}`,
+    {
+      headers: getHeaders(),
+    },
+  );
   return handleResponse(res);
 };
 
 export const syncStaffShiftsApi = async (body: any) => {
   const res = await fetch(`${API_BASE_URL}/movements/staff-shifts/sync`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(body),
+  });
+  return handleResponse(res);
+};
+
+export const updateGuestStatusApi = async (guestId: string, status: string) => {
+  const res = await fetch(`${API_BASE_URL}/guests/${guestId}`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify({ status }),
+  });
+  return handleResponse(res);
+};
+
+export const fetchPhoneBoothAssignmentsApi = async (
+  filters?: QueryFilters,
+): Promise<PhoneBoothAssignment[]> => {
+  const res = await fetch(
+    `${API_BASE_URL}/phone-booth${buildQueryParams(filters)}`,
+    {
+      headers: getHeaders(),
+    },
+  );
+  return handleResponse(res);
+};
+
+export const syncPhoneBoothAssignmentToApi = async (body: any) => {
+  const res = await fetch(`${API_BASE_URL}/phone-booth`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(body),
+  });
+  return handleResponse(res);
+};
+
+export const fetchKeyCollectionsApi = async (
+  filters?: QueryFilters,
+): Promise<any[]> => {
+  const res = await fetch(
+    `${API_BASE_URL}/keys${buildQueryParams(filters)}`,
+    {
+      headers: getHeaders(),
+    },
+  );
+  return handleResponse(res);
+};
+
+export const syncKeyCollectionToApi = async (body: any) => {
+  const res = await fetch(`${API_BASE_URL}/keys`, {
     method: "POST",
     headers: getHeaders(),
     body: JSON.stringify(body),
@@ -109,6 +178,11 @@ const ApiService = {
   fetchDeviceMovements,
   fetchStaffShiftsApi,
   syncStaffShiftsApi,
+  updateGuestStatusApi,
+  fetchPhoneBoothAssignmentsApi,
+  syncPhoneBoothAssignmentToApi,
+  fetchKeyCollectionsApi,
+  syncKeyCollectionToApi,
 };
 
 export default ApiService;

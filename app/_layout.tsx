@@ -44,7 +44,7 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="activation" />
-          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(app)" />
           <Stack.Screen name="guest" />
         </Stack>
         <StatusBar style="auto" />

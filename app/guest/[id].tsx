@@ -46,7 +46,11 @@ export default function GuestDetails() {
         )}
 
         {item.mode && (
-          <Text variant="bodySmall" style={{ color: Colors.light.icon }} numberOfLines={1}>
+          <Text
+            variant="bodySmall"
+            style={{ color: Colors.light.icon }}
+            numberOfLines={1}
+          >
             {item.mode.toUpperCase()}
           </Text>
         )}

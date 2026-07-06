@@ -10,6 +10,8 @@ import { isTabletByDimensions } from "@/src/utils/dimensions";
 import ThemedButton from "@/src/components/ThemedButton";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ThemedSearchbar from "@/src/components/ThemedSearchbar";
+import { router } from "expo-router";
+import { IconSymbol } from "../../components/ui/icon-symbol";
 
 export default function StaffMovementTab() {
   const [modalVisible, setModalVisible] = useState(false);
@@ -36,11 +38,14 @@ export default function StaffMovementTab() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text
-          style={{ fontSize: 32, fontWeight: "bold", color: Colors.light.text }}
-        >
-          Staff Parking
-        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+          <TouchableOpacity onPress={() => router.back()} style={{ padding: 4, marginRight: 8 }}>
+            <IconSymbol name="chevron.left" size={32} color={Colors.light.text} />
+          </TouchableOpacity>
+          <Text style={{ fontSize: 32, fontWeight: "bold", color: Colors.light.text }}>
+            Staff Shifts
+          </Text>
+        </View>
         <ThemedButton mode="contained" onPress={() => setModalVisible(true)}>
           Scan
         </ThemedButton>
