@@ -48,12 +48,13 @@ export default function PhoneBoothFeed() {
 
   // Active assignments (currently inside booth)
   const activeAssignments = phoneBoothAssignments.filter(
-    (a) => a.status === "assigned"
+    (a) => a.status === "assigned" && a.staffId !== "LOCKED"
   );
 
   // Filter list based on selected tab (active vs history)
   const filteredAssignments = phoneBoothAssignments
     .filter((a) => {
+      if (a.staffId === "LOCKED") return false;
       if (feedMode === "active" && a.status !== "assigned") {
         return false;
       }
